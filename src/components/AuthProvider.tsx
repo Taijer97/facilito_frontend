@@ -44,20 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             
             setDbUser(data);
           } else {
-            // Check if email already exists for another user (to prevent duplicate emails)
-            const { collection, query, where, getDocs } = await import('firebase/firestore');
-            const emailQuery = query(collection(db, 'users'), where('email', '==', currentUser.email));
-            const emailSnap = await getDocs(emailQuery);
-
-            if (!emailSnap.empty) {
-              // Email exists in another account - handle carefully
-              // For now, we will link it or just alert, but usually this shouldn't happen with single provider
-              // We'll set dbUser to the found data if we want to "link", but security-wise that's risky.
-              // Better to just show error or block.
-              console.warn("User tried to login with an email that is already registered with another UID.");
-              // Optionally show error in UI via state, but AuthProvider is a bit low-level here.
-            }
-
             // Check if super admin
             const isSuperAdmin = currentUser.email === 'dj.taijer@gmail.com';
             const newUser = {

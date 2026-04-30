@@ -22,7 +22,7 @@ service cloud.firestore {
     }
 
     function isSupport() {
-      return isSignedIn() && (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'support');
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'support';
     }
 
     function isAdminOrSupport() {
@@ -39,7 +39,8 @@ service cloud.firestore {
              && data.createdAt == request.time;
        }
 
-       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+       allow get: if isSignedIn() && request.auth.uid == userId;
+       allow get: if isAdmin();
        allow list: if isSignedIn() && isAdmin();
        
        allow create: if isSignedIn() && request.auth.uid == userId 
@@ -48,6 +49,7 @@ service cloud.firestore {
                      
        allow update: if (isSignedIn() && request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lastName', 'dni', 'address', 'whatsapp', 'updatedAt', 'image']) && incoming().role == existing().role)
                      || isAdmin();
+       allow delete: if isAdmin();
     }
 
      match /settings/{docId} {

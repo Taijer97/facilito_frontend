@@ -676,7 +676,7 @@ export default function AdminDashboard() {
                                                 <RotateCcw className="w-5 h-5" />
                                             </button>
                                         )}
-                                        {dbUser?.role === 'admin' && (
+                                        {(dbUser?.role === 'admin' || dbUser?.role === 'support') && (
                                             <button 
                                                 onClick={() => deleteTicket(t)}
                                                 className="p-3 bg-red-100 text-red-500 border-2 border-black rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-[2px_2px_0px_0px_#000]"
@@ -898,7 +898,7 @@ export default function AdminDashboard() {
                                       </td>
                                       <td className="p-4 border-r-4 border-black">S/ {((r.soldTickets || 0) * r.ticketPrice).toFixed(2)}</td>
                                   <td className="p-4">
-                                      {r.status === 'active' && dbUser?.role === 'admin' && (
+                                      {r.status === 'active' && (dbUser?.role === 'admin' || dbUser?.role === 'support') && (
                                           <button onClick={() => handleOpenDrawModal(r)} className="bg-yellow-400 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-yellow-500 transition-all font-bold">Sortear</button>
                                       )}
                                   </td>

@@ -35,7 +35,7 @@ export default function Layout() {
     }
 
     let q;
-    if (dbUser?.role === 'admin') {
+    if (dbUser?.role === 'admin' || dbUser?.role === 'support') {
       // Admins: Listen to ANY new pending_payment ticket
       q = query(
         collection(db, 'tickets'),
@@ -161,7 +161,7 @@ export default function Layout() {
             <div className="hidden md:flex items-center space-x-4">
               {user ? (
                 <div className="flex items-center space-x-4">
-                  {dbUser?.role === 'admin' && (
+                  {(dbUser?.role === 'admin' || dbUser?.role === 'support') && (
                     <Link to="/admin" className="flex items-center space-x-1 text-sm font-bold text-black bg-cyan-300 border-2 border-black px-3 py-1.5 rounded-full shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[0px_0px_0px_0px_#000] transition-all">
                       <ShieldAlert className="w-4 h-4" />
                       <span>Admin</span>
@@ -200,7 +200,7 @@ export default function Layout() {
                              filteredNotifications.map((n: any) => (
                                <div key={n.id} className="text-xs p-2 bg-yellow-50 border-2 border-black rounded-lg">
                                  <p className="font-black">
-                                   {dbUser?.role === 'admin' ? `Nueva Compra: ${n.userName}` : `Ticket #${n.ticketNumber} ${n.status === 'paid' ? 'APROBADO' : 'RECHAZADO'}`}
+                                   {(dbUser?.role === 'admin' || dbUser?.role === 'support') ? `Nueva Compra: ${n.userName}` : `Ticket #${n.ticketNumber} ${n.status === 'paid' ? 'APROBADO' : 'RECHAZADO'}`}
                                  </p>
                                  <p className="text-[10px] text-gray-500">{new Date(n.updatedAt?.toMillis?.() || n.createdAt?.toMillis?.() || Date.now()).toLocaleTimeString()}</p>
                                </div>
@@ -256,7 +256,7 @@ export default function Layout() {
                       </span>
                     )}
                   </Link>
-                  {dbUser?.role === 'admin' && (
+                  {(dbUser?.role === 'admin' || dbUser?.role === 'support') && (
                     <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl border-4 border-black bg-orange-300 font-bold text-black shadow-[4px_4px_0px_0px_#000]">Admin Panel</Link>
                   )}
                   <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="w-full text-left block px-4 py-3 rounded-xl border-4 border-black bg-red-500 font-bold text-white shadow-[4px_4px_0px_0px_#000]">Cerrar Sesión</button>

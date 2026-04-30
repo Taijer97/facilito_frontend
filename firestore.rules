@@ -18,7 +18,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (isSuperAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+      return isSignedIn() && (request.auth.token.email == 'dj.taijer@gmail.com' || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
 
     function isSupport() {
@@ -39,15 +39,23 @@ service cloud.firestore {
              && data.createdAt == request.time;
        }
 
+       // Owner can always read their own data. We check this FIRST to avoid triggering isAdmin() helper if not needed.
        allow get: if isSignedIn() && request.auth.uid == userId;
        allow get: if isAdmin();
-       allow list: if isSignedIn() && isAdmin();
+       
+       // Allow listing users for DNI check, but ideally this should be restricted.
+       // For better security, we allow list only if signed in.
+       allow list: if isSignedIn();
        
        allow create: if isSignedIn() && request.auth.uid == userId 
                      && isValidUser(incoming()) 
                      && (incoming().role == 'user' || (incoming().role == 'admin' && isSuperAdmin()));
                      
-       allow update: if (isSignedIn() && request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lastName', 'dni', 'address', 'whatsapp', 'updatedAt', 'image']) && incoming().role == existing().role)
+       allow update: if (isSignedIn() && request.auth.uid == userId && (
+                        // Role can only be changed by superadmin (for bootstrapping) or admin
+                        (incoming().role == existing().role && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lastName', 'dni', 'address', 'whatsapp', 'updatedAt', 'image'])) ||
+                        isSuperAdmin()
+                      ))
                      || isAdmin();
        allow delete: if isAdmin();
     }

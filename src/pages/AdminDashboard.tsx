@@ -24,7 +24,7 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: ''});
+  const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string, yapeName: string}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: '', yapeName: ''});
   const [activeTab, setActiveTab] = useState<'tickets' | 'raffles_create' | 'raffles_list' | 'users' | 'settings'>('tickets');
   const [isUploading, setIsUploading] = useState(false);
   
@@ -976,6 +976,17 @@ export default function AdminDashboard() {
           <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] max-w-2xl mx-auto">
               <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6">CONFIGURACIÓN DE PAGOS</h2>
               <form onSubmit={handleUpdateSettings} className="space-y-6">
+                  <div>
+                      <label className="block text-lg font-bold mb-1">Nombre del Titular (Yape / Plin)</label>
+                      <input 
+                        type="text" 
+                        value={appSettings.yapeName || ''} 
+                        onChange={e => setAppSettings({...appSettings, yapeName: e.target.value})} 
+                        required 
+                        placeholder="Ej: Juan Pérez"
+                        className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
+                      />
+                  </div>
                   <div>
                       <label className="block text-lg font-bold mb-1">Número de Yape / Plin</label>
                       <input 

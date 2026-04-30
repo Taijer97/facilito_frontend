@@ -270,6 +270,11 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                                     <QrCode className="w-24 h-24 mx-auto text-black mb-3" />
                                 )}
                                 <p className="font-bold text-lg mb-1 uppercase">Paga por {paymentMethod}:</p>
+                                {settings?.yapeName && (
+                                    <p className="font-bold text-md text-gray-700 bg-white border-2 border-dashed border-gray-400 rounded-lg py-1 px-4 mb-2 inline-block">
+                                        Titular: {settings.yapeName}
+                                    </p>
+                                )}
                                 <p className="font-comic text-3xl sm:text-4xl text-black tracking-widest drop-shadow-[2px_2px_0px_#fff] bg-white border-2 border-black rounded-xl py-2 my-2 break-words px-2">
                                     {settings?.yapeNumber || 'REVISAR PANEL'}
                                 </p>
@@ -278,11 +283,11 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                             
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block font-bold text-black mb-2">Nombre y Apellido</label>
+                                    <label className="block font-bold text-black mb-2">Nombre y Apellido:</label>
                                     <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full text-lg font-bold border-4 border-black rounded-xl px-4 py-3 focus:bg-yellow-100 outline-none transition-all shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5" placeholder="Ej. Juan Pérez" />
                                 </div>
                                 <div>
-                                    <label className="block font-bold text-black mb-2">WhatsApp <span className="font-normal text-gray-500">(9 dígitos)</span></label>
+                                    <label className="block font-bold text-black mb-2">Ingrese su N° de WhatsApp:<span className="font-normal text-gray-500">(9 dígitos)</span></label>
                                     <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 9))} className="w-full text-lg font-bold border-4 border-black rounded-xl px-4 py-3 focus:bg-cyan-100 outline-none transition-all shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5" placeholder="Ej. 9XXXXXXXX" />
                                 </div>
                             </div>

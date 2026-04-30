@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from './AuthProvider';
+import { handleFirestoreError, OperationType } from '../lib/errorHandling';
 import { User, ShieldCheck, Phone, MapPin, CreditCard, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -47,9 +48,17 @@ export default function ProfileCompletionModal() {
     setSubmitting(true);
     setError(null);
     try {
+      const trimmedDni = dni.trim();
       // 1. Check if DNI is already used by someone else
-      const dniQuery = query(collection(db, 'users'), where('dni', '==', dni.trim()));
-      const dniSnap = await getDocs(dniQuery);
+      const dniQuery = query(collection(db, 'users'), where('dni', '==', trimmedDni));
+      let dniSnap;
+      try {
+          dniSnap = await getDocs(dniQuery);
+      } catch (err) {
+          handleFirestoreError(err, OperationType.LIST, 'users (dni check)');
+          throw err;
+      }
+
       const otherUserWithDni = dniSnap.docs.find(d => d.id !== user.uid);
       
       if (otherUserWithDni) {
@@ -58,18 +67,24 @@ export default function ProfileCompletionModal() {
         return;
       }
 
-      await updateDoc(doc(db, 'users', user.uid), {
-        name,
-        lastName,
-        dni,
-        address,
-        whatsapp,
-        updatedAt: serverTimestamp()
-      });
+      try {
+          await updateDoc(doc(db, 'users', user.uid), {
+            name: name.trim(),
+            lastName: lastName.trim(),
+            dni: trimmedDni,
+            address: address.trim(),
+            whatsapp: whatsapp.trim(),
+            updatedAt: serverTimestamp()
+          });
+      } catch (err) {
+          handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+          throw err;
+      }
+
       setShow(false);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Hubo un error al actualizar tu perfil. Por favor, intenta de nuevo.');
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError('Hubo un error al actualizar tu perfil. Por favor, intenta de nuevo.');
     } finally {
       setSubmitting(false);
     }

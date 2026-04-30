@@ -21,13 +21,21 @@ service cloud.firestore {
       return isSignedIn() && (isSuperAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
 
+    function isSupport() {
+      return isSignedIn() && (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'support');
+    }
+
+    function isAdminOrSupport() {
+      return isAdmin() || isSupport();
+    }
+
     match /users/{userId} {
        function isValidUser(data) {
          return data.keys().hasAll(['email', 'name', 'role', 'createdAt'])
              && data.keys().size() <= 12
              && data.email is string
              && data.name is string
-             && data.role is string && data.role in ['user', 'admin']
+             && data.role is string && data.role in ['user', 'support', 'admin']
              && data.createdAt == request.time;
        }
 
@@ -42,22 +50,22 @@ service cloud.firestore {
                      || isAdmin();
     }
 
-    match /settings/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /raffles/{raffleId} {
-        allow read: if true; 
-        allow write: if isAdmin();
-    }
-    
-    match /tickets/{ticketId} {
-       allow get: if isSignedIn() && (request.auth.uid == existing().userId || isAdmin());
-       allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
-       
-       allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().status == 'pending_payment';
-       allow update, delete: if isAdmin();
-    }
+     match /settings/{docId} {
+       allow read: if true;
+       allow write: if isAdmin();
+     }
+ 
+     match /raffles/{raffleId} {
+         allow read: if true; 
+         allow write: if isAdminOrSupport();
+     }
+     
+     match /tickets/{ticketId} {
+        allow get: if isSignedIn() && (request.auth.uid == existing().userId || isAdminOrSupport());
+        allow list: if isSignedIn() && (isAdminOrSupport() || resource.data.userId == request.auth.uid);
+        
+        allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().status == 'pending_payment';
+        allow update, delete: if isAdminOrSupport();
+     }
   }
 }

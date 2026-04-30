@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db, signInWithGoogle } from '../lib/firebase';
 import { useAuth } from '../components/AuthProvider';
 import { handleFirestoreError, OperationType } from '../lib/errorHandling';
@@ -46,20 +46,20 @@ export default function RaffleDetail() {
 
   useEffect(() => {
     if (!id) return;
-    async function loadRaffle() {
-      try {
-        const docRef = doc(db, 'raffles', id!);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-            setRaffle({ id: snap.id, ...snap.data() });
-        }
-      } catch (error) {
-        handleFirestoreError(error, OperationType.GET, `raffles/${id}`);
-      } finally {
-        setLoading(false);
+    
+    const unsubscribe = onSnapshot(doc(db, 'raffles', id), (snap) => {
+      if (snap.exists()) {
+        setRaffle({ id: snap.id, ...snap.data() });
+      } else {
+        setRaffle(null);
       }
-    }
-    loadRaffle();
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, `raffles/${id}`);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [id]);
 
   useEffect(() => {
@@ -172,9 +172,21 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
             
             <div className="bg-white rounded-2xl p-5 border-4 border-black space-y-4 shadow-[4px_4px_0px_0px_#000] transform rotate-1">
                 <div className="flex justify-between items-center text-lg font-bold border-b-2 border-gray-200 pb-2">
-                    <span className="flex items-center"><Trophy className="w-5 h-5 mr-2 text-yellow-500" /> Premio</span>
+                    <span className="flex items-center"><Trophy className="w-5 h-5 mr-2 text-yellow-500" /> 1° Premio</span>
                     <span className="text-red-500">{raffle.prize}</span>
                 </div>
+                {raffle.prize2 && (
+                    <div className="flex justify-between items-center text-md font-bold border-b-2 border-gray-100 pb-2">
+                        <span className="flex items-center"><Trophy className="w-5 h-5 mr-2 text-cyan-500" /> 2° Premio</span>
+                        <span className="text-black">{raffle.prize2}</span>
+                    </div>
+                )}
+                {raffle.prize3 && (
+                    <div className="flex justify-between items-center text-md font-bold border-b-2 border-gray-100 pb-2">
+                        <span className="flex items-center"><Trophy className="w-5 h-5 mr-2 text-purple-500" /> 3° Premio</span>
+                        <span className="text-black">{raffle.prize3}</span>
+                    </div>
+                )}
                 <div className="flex justify-between items-center text-lg font-bold">
                     <span className="flex items-center"><TicketIcon className="w-5 h-5 mr-2 text-blue-500" /> Disponibles</span>
                     <span>{ticketsLeft} tickets</span>

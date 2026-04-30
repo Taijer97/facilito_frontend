@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { ArrowRight, Trophy, ShieldCheck, Ticket, Star, Zap, Clock } from 'lucide-react';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default function Home() {
@@ -10,25 +10,26 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchFeatured() {
-      try {
-        const q = query(
-          collection(db, 'raffles'), 
-          where('status', '==', 'active'), 
-          orderBy('endDate', 'asc'),
-          limit(1)
-        );
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          setFeaturedRaffle({ id: snap.docs[0].id, ...snap.docs[0].data() });
-        }
-      } catch (error) {
-        console.error("Error fetching featured raffle:", error);
-      } finally {
-        setLoading(false);
+    const q = query(
+      collection(db, 'raffles'), 
+      where('status', '==', 'active'), 
+      orderBy('endDate', 'asc'),
+      limit(1)
+    );
+
+    const unsubscribe = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        setFeaturedRaffle({ id: snap.docs[0].id, ...snap.docs[0].data() });
+      } else {
+        setFeaturedRaffle(null);
       }
-    }
-    fetchFeatured();
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching featured raffle:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

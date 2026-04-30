@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Clock, Users, ArrowRight } from 'lucide-react';
 
@@ -9,18 +9,18 @@ export default function ActiveRaffles() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadRaffles() {
-      try {
-        const q = query(collection(db, 'raffles'), where('status', '==', 'active'), orderBy('endDate', 'asc'));
-        const snap = await getDocs(q);
-        setRaffles(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      } catch (error) {
-        console.error("Error loading raffles", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadRaffles();
+    const q = query(collection(db, 'raffles'), where('status', '==', 'active'), orderBy('endDate', 'asc'));
+    
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const rafflesData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRaffles(rafflesData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error loading raffles", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   if (loading) {

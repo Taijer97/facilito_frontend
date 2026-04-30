@@ -50,3 +50,10 @@ body::before {
     #facc15;
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+

@@ -10,7 +10,7 @@
         "lastName": { "type": "string" },
         "dni": { "type": "string" },
         "address": { "type": "string" },
-        "role": { "type": "string", "enum": ["user", "admin"] },
+        "role": { "type": "string", "enum": ["user", "support", "admin"] },
         "whatsapp": { "type": "string" },
         "createdAt": { "type": "number" },
         "updatedAt": { "type": "number" }

@@ -25,12 +25,16 @@ export default function AdminDashboard() {
   }, []);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: ''});
-  const [activeTab, setActiveTab] = useState<'raffles' | 'users' | 'settings'>('raffles');
+  const [activeTab, setActiveTab] = useState<'tickets' | 'raffles_create' | 'raffles_list' | 'users' | 'settings'>('tickets');
+  const [isUploading, setIsUploading] = useState(false);
   
   // New Raffle state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [prize, setPrize] = useState('');
+  const [prize2, setPrize2] = useState('');
+  const [prize3, setPrize3] = useState('');
+  const [showExtraPrizes, setShowExtraPrizes] = useState(false);
   const [price, setPrice] = useState('5');
   const [total, setTotal] = useState('100');
   const [imageUrl, setImageUrl] = useState('');
@@ -43,11 +47,13 @@ export default function AdminDashboard() {
   const [endTimeInput, setEndTimeInput] = useState('20:00');
 
   useEffect(() => {
-    if (dbUser?.role !== 'admin') return;
+    if (dbUser?.role !== 'admin' && dbUser?.role !== 'support') return;
 
     loadAdminData();
-    loadUsers();
-    loadSettings();
+    if (dbUser?.role === 'admin') {
+      loadUsers();
+      loadSettings();
+    }
 
     // Real-time listener for pending tickets
     const q = query(
@@ -70,6 +76,21 @@ export default function AdminDashboard() {
 
     return () => unsubscribe();
   }, [dbUser]);
+
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    if (!confirm(`¿Cambiar rol a ${newRole}?`)) return;
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        role: newRole,
+        updatedAt: serverTimestamp()
+      });
+      loadUsers();
+      alert('Rol actualizado');
+    } catch (e) {
+      console.error(e);
+      alert('Error actualizando rol');
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -109,6 +130,35 @@ export default function AdminDashboard() {
         console.error(err);
         alert('Error al guardar configuración');
       }
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('qr', file);
+
+    try {
+      const response = await fetch('/api/upload-qr', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al subir la imagen');
+      }
+
+      const data = await response.json();
+      setAppSettings(prev => ({ ...prev, yapeQrUrl: data.url }));
+      alert('Imagen subida con éxito. Recuerda guardar los cambios.');
+    } catch (err) {
+      console.error(err);
+      alert('Fallo al subir la imagen');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -156,6 +206,8 @@ export default function AdminDashboard() {
           await addDoc(collection(db, 'raffles'), {
               title,
               prize,
+              prize2: showExtraPrizes ? prize2 : '',
+              prize3: showExtraPrizes ? prize3 : '',
               ticketPrice: Number(price),
               totalTickets: Number(total),
               soldTickets: 0,
@@ -168,17 +220,22 @@ export default function AdminDashboard() {
               bonusThreshold: Number(bonusThreshold) || 0,
               winnerTicketId: '',
               winnerUserId: '',
-              winningTicketNumber: ''
+              winningTicketNumber: '',
+              winners: [] // To store multiple winners if applicable
           });
           setTitle(''); 
           setPrize(''); 
+          setPrize2('');
+          setPrize3('');
+          setShowExtraPrizes(false);
           setImageUrl(''); 
           setDescription('');
           setPrice('5');
           setTotal('100');
           setBonusThreshold('10');
           loadAdminData();
-          alert('Sorteo creado');
+          alert('Sorteo creado con éxito');
+          setActiveTab('raffles_list');
       } catch (error) {
           console.error(error);
           alert('Error');
@@ -311,6 +368,7 @@ export default function AdminDashboard() {
   const [drawTickets, setDrawTickets] = useState<any[]>([]);
   const [availableTicketsPool, setAvailableTicketsPool] = useState<any[]>([]);
   const [currentDisplayTicket, setCurrentDisplayTicket] = useState<any>(null);
+  const [drawingPosition, setDrawingPosition] = useState<1 | 2 | 3>(1);
 
   const handleOpenDrawModal = async (raffle: any) => {
       setActiveRaffleForDraw(raffle);
@@ -319,12 +377,18 @@ export default function AdminDashboard() {
       setCurrentAttempt(1);
       setAutoMode(false);
       setCurrentDisplayTicket(null);
+      // Logic: Start from 3rd if exists, else 2nd, else 1st
+      const startPos = raffle.prize3 ? 3 : (raffle.prize2 ? 2 : 1);
+      setDrawingPosition(startPos as 1 | 2 | 3);
       setWinnerModalOpen(true);
       
       try {
           const tSnap = await getDocs(query(collection(db, 'tickets')));
+          // Only show tickets that haven't won a previous position in this raffle
+          const winnersTicketIds = raffle.winners?.map((w: any) => w.ticketId) || [];
+          
           const tickets = tSnap.docs.map(d => ({id: d.id, ...d.data() as any}))
-              .filter((t: any) => t.raffleId === raffle.id && t.status === 'paid');
+              .filter((t: any) => t.raffleId === raffle.id && t.status === 'paid' && !winnersTicketIds.includes(t.id));
               
           setDrawTickets(tickets);
           setAvailableTicketsPool(tickets);
@@ -372,20 +436,71 @@ export default function AdminDashboard() {
   const saveWinner = async (winnerSelected: any) => {
       if (!activeRaffleForDraw) return;
       try {
-          await updateDoc(doc(db, 'raffles', activeRaffleForDraw.id), {
-              status: 'ended',
-              winnerTicketId: winnerSelected.id,
-              winnerUserId: winnerSelected.userId,
-              winningTicketNumber: winnerSelected.ticketNumber,
+          const winnerData = {
+              ticketId: winnerSelected.id,
+              userId: winnerSelected.userId,
+              userName: winnerSelected.userName,
+              ticketNumber: winnerSelected.ticketNumber,
+              position: drawingPosition,
+              prize: drawingPosition === 1 ? activeRaffleForDraw.prize : (drawingPosition === 2 ? activeRaffleForDraw.prize2 : activeRaffleForDraw.prize3),
+              drawnAt: new Date().getTime()
+          };
+
+          const updatedWinners = [...(activeRaffleForDraw.winners || []), winnerData];
+
+          // Update raffle with the new winner list
+          const updateObj: any = {
+              winners: updatedWinners,
               updatedAt: serverTimestamp()
-          });
-          
-          for (const t of drawTickets) {
-              await updateDoc(doc(db, 'tickets', t.id), {
-                  status: t.id === winnerSelected.id ? 'won' : 'lost',
-                  updatedAt: serverTimestamp()
+          };
+
+          // If we are drawing the 1st prize (primary winner), end the raffle
+          if (drawingPosition === 1) {
+              updateObj.status = 'ended';
+              updateObj.winnerTicketId = winnerSelected.id;
+              updateObj.winnerUserId = winnerSelected.userId;
+              updateObj.winningTicketNumber = winnerSelected.ticketNumber;
+
+              await updateDoc(doc(db, 'raffles', activeRaffleForDraw.id), updateObj);
+              
+              // Mark ALL tickets except other winners as lost, current as won
+              for (const t of drawTickets) {
+                  const isCurrentWinner = t.id === winnerSelected.id;
+                  const wasPreviousWinner = activeRaffleForDraw.winners?.some((w: any) => w.ticketId === t.id);
+                  
+                  if (isCurrentWinner || wasPreviousWinner) {
+                      await updateDoc(doc(db, 'tickets', t.id), { status: 'won', updatedAt: serverTimestamp() });
+                  } else {
+                      await updateDoc(doc(db, 'tickets', t.id), { status: 'lost', updatedAt: serverTimestamp() });
+                  }
+              }
+          } else {
+              // Just update winners array for 2nd and 3rd place
+              await updateDoc(doc(db, 'raffles', activeRaffleForDraw.id), updateObj);
+              
+              // Mark this specific ticket as won
+              await updateDoc(doc(db, 'tickets', winnerSelected.id), {
+                status: 'won',
+                updatedAt: serverTimestamp()
               });
+
+              // Remove the winner from the local pool for NEXT draw in this session
+              setAvailableTicketsPool(prev => prev.filter(t => t.id !== winnerSelected.id));
           }
+          
+          // Reset for next position or close
+          if (drawingPosition === 1) {
+            setWinnerModalOpen(false);
+          } else {
+            // Suggest next position (descending sequence if possible)
+            setDrawState('setup');
+            setCurrentAttempt(1);
+            // If we just did 3rd, do 2nd. If 2nd, do 1st.
+            setDrawingPosition(drawingPosition === 3 ? 2 : 1);
+            // Current winner stays in UI for a moment or until next setup?
+            // Actually setup resets currentDisplayTicket potentially? Let's check below.
+          }
+          
           loadAdminData();
       } catch(e) {
           console.error(e);
@@ -408,308 +523,344 @@ export default function AdminDashboard() {
      return () => clearTimeout(t);
   }, [drawState, autoMode, currentAttempt, attemptTarget]);
 
-  if (!dbUser || dbUser.role !== 'admin') {
+  if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'support')) {
       return <div className="p-20 text-center font-comic text-3xl text-red-500 bg-white border-4 border-black m-10 shadow-[8px_8px_0px_0px_#000] rotate-1">ACCESO DENEGADO</div>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-5xl font-comic text-black mb-12 inline-block bg-cyan-400 border-4 border-black px-6 py-2 shadow-[8px_8px_0px_0px_#000] transform -rotate-1 text-center sm:text-left">PANEL DE ADMINISTRACIÓN</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+      <h1 className="text-3xl sm:text-5xl font-comic text-black mb-8 sm:mb-12 inline-block bg-cyan-400 border-4 border-black px-4 sm:px-6 py-2 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] transform sm:-rotate-1 text-center sm:text-left w-full sm:w-auto uppercase">{dbUser?.role === 'admin' ? 'PANEL ADMIN' : 'PANEL SOPORTE'}</h1>
       
       {/* Tabs */}
-      <div className="flex flex-wrap gap-4 mb-10">
-          <button 
-              onClick={() => setActiveTab('raffles')}
-              className={`px-6 py-2 font-comic text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${activeTab === 'raffles' ? 'bg-yellow-400' : 'bg-white'}`}
-          >
-              SORTEOS Y TICKETS
-          </button>
-          <button 
-              onClick={() => setActiveTab('users')}
-              className={`px-6 py-2 font-comic text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${activeTab === 'users' ? 'bg-cyan-400' : 'bg-white'}`}
-          >
-              USUARIOS
-          </button>
-          <button 
-              onClick={() => setActiveTab('settings')}
-              className={`px-6 py-2 font-comic text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none ${activeTab === 'settings' ? 'bg-red-400 text-white' : 'bg-white'}`}
-          >
-              CONFIGURACIÓN YAPE
-          </button>
+      <div className="flex flex-row overflow-x-auto pb-4 sm:pb-0 sm:flex-wrap gap-3 sm:gap-4 mb-8 sm:mb-10 no-scrollbar">
+          {(dbUser?.role === 'admin' || dbUser?.role === 'support') && (
+            <>
+              <button 
+                  onClick={() => setActiveTab('tickets')}
+                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'tickets' ? 'bg-yellow-400' : 'bg-white'}`}
+              >
+                  GESTIÓN TICKETS
+              </button>
+              <button 
+                  onClick={() => setActiveTab('raffles_create')}
+                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'raffles_create' ? 'bg-orange-400' : 'bg-white'}`}
+              >
+                  NUEVO SORTEO
+              </button>
+              <button 
+                  onClick={() => setActiveTab('raffles_list')}
+                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'raffles_list' ? 'bg-cyan-400' : 'bg-white'}`}
+              >
+                  LISTA SORTEOS
+              </button>
+            </>
+          )}
+          {dbUser?.role === 'admin' && (
+            <>
+              <button 
+                  onClick={() => setActiveTab('users')}
+                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'users' ? 'bg-purple-400' : 'bg-white'}`}
+              >
+                  USUARIOS
+              </button>
+              <button 
+                  onClick={() => setActiveTab('settings')}
+                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'settings' ? 'bg-red-400 text-white' : 'bg-white'}`}
+              >
+                  PAGOS
+              </button>
+            </>
+          )}
       </div>
 
-      {activeTab === 'raffles' && (
-        <div className="space-y-10">
-          {/* SECCIÓN SUPERIOR: TICKETS Y CREACIÓN */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-              
-              {/* COLUMNA IZQUIERDA: PENDIENTES */}
-              <div className="bg-white border-8 border-black rounded-[3rem] p-8 shadow-[12px_12px_0px_0px_#000] min-h-[500px] flex flex-col">
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-3">
-                      <Clock className="w-8 h-8 text-yellow-500" />
-                      <h2 className="text-3xl font-comic text-black uppercase leading-none">Gestión de Tickets</h2>
+      {activeTab === 'tickets' && (
+          <div className="space-y-8">
+            <div className="bg-white border-4 sm:border-8 border-black rounded-3xl sm:rounded-[3rem] p-4 sm:p-8 shadow-[12px_12px_0px_0px_#000] sm:shadow-[12px_12px_0px_0px_#000] min-h-[400px] flex flex-col">
+                <div className="flex items-center justify-between mb-6 sm:mb-8">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
+                    <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none">Validación de Tickets</h2>
+                  </div>
+                </div>
+                
+                <div className="space-y-10 overflow-y-auto pr-2 flex-grow max-h-[1000px] custom-scrollbar">
+                    <div>
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="bg-yellow-300 border-4 border-black px-4 py-1 rounded-2xl shadow-[4px_4px_0px_0px_#000]">
+                                <p className="font-comic text-xl">ÓRDENES PENDIENTES ({pendingGroups.length})</p>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            {pendingGroups.length === 0 ? (
+                                <div className="bg-gray-50 border-4 border-dashed border-gray-200 rounded-3xl p-10 text-center text-gray-400 font-bold italic">No hay órdenes pendientes.</div>
+                            ) : (
+                                pendingGroups.map(group => {
+                                    const earliestTicketTime = group.createdAt;
+                                    const timeLeft = 3600000 - (now - earliestTicketTime);
+                                    const isExpired = timeLeft <= 0;
+                                    const isExpiring = timeLeft < 900000; // 15 mins
+
+                                    return (
+                                        <div 
+                                          key={group.id} 
+                                          onClick={() => setSelectedGroupId(group.id)} 
+                                          className={`p-5 border-4 border-black rounded-3xl flex justify-between items-center shadow-[6px_6px_0px_0px_#000] cursor-pointer hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all ${isExpired ? 'bg-red-50 border-red-500' : 'bg-yellow-50'}`}
+                                        >
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className={`font-comic text-xl ${isExpired ? 'text-red-600' : ''}`}>{group.userName}</p>
+                                                    {isExpired && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black">EXPIRADO</span>}
+                                                </div>
+                                                <p className="font-bold text-sm text-gray-700">{group.raffleTitle}</p>
+                                                <div className="flex gap-2">
+                                                    <p className="text-xs font-black bg-black text-white px-2 py-1 inline-block rounded-lg">{group.tickets.length} TICKETS</p>
+                                                    {group.userPhone && (
+                                                        <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
+                                                            <MessageCircle className="w-3 h-3" /> {group.userPhone}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <button className="bg-cyan-400 border-4 border-black px-4 py-2 rounded-xl font-bold shadow-[3px_3px_0px_0px_#000]">GESTIONAR</button>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-10 overflow-y-auto pr-2 flex-grow max-h-[700px] custom-scrollbar">
-                      {/* SUBSECCIÓN: VIGENTES */}
-                      <div>
-                          <div className="flex items-center gap-3 mb-6">
-                              <div className="bg-yellow-300 border-4 border-black px-4 py-1 rounded-2xl shadow-[4px_4px_0px_0px_#000]">
-                                  <p className="font-comic text-xl">ÓRDENES PENDIENTES ({pendingGroups.length})</p>
-                              </div>
-                              <div className="h-1 flex-grow bg-black rounded-full opacity-10"></div>
-                          </div>
+                </div>
+            </div>
 
-                          <div className="space-y-4">
-                              {pendingGroups.length === 0 ? (
-                                  <div className="bg-gray-50 border-4 border-dashed border-gray-200 rounded-3xl p-10 text-center">
-                                      <p className="text-gray-400 font-bold italic">No hay órdenes pendientes por el momento.</p>
-                                  </div>
-                              ) : (
-                                  pendingGroups.map(group => {
-                                      const earliestTicketTime = group.createdAt;
-                                      const timeLeft = 3600000 - (now - earliestTicketTime);
-                                      const isExpiring = timeLeft < 900000; // less than 15 mins
-                                      const isExpired = timeLeft <= 0;
-                                      
-                                      const minutesLeft = Math.max(0, Math.floor(timeLeft / 60000));
-                                      const secondsLeft = Math.max(0, Math.floor((timeLeft % 60000) / 1000));
+            {/* RECUPERAR TICKETS (BUSQUEDA) */}
+            <div className="bg-white border-4 border-black rounded-3xl p-6 sm:p-8 shadow-[12px_12px_0px_0px_#000]">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-red-400 border-4 border-black px-4 py-1 rounded-2xl shadow-[4px_4px_0px_0px_#000] text-white">
+                        <p className="font-comic text-xl uppercase">Buscador y Recuperación</p>
+                    </div>
+                </div>
 
-                                      const normalCount = group.tickets.filter((t: any) => !t.isBonus).length;
-                                      const bonusCount = group.tickets.filter((t: any) => t.isBonus).length;
+                <div className="space-y-6">
+                    <div className="flex gap-2">
+                        <input 
+                            type="text" 
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleSearchTickets()}
+                            placeholder="Buscar por Nombre o Nro de Ticket..."
+                            className="flex-grow border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold"
+                        />
+                        <button 
+                            onClick={handleSearchTickets}
+                            disabled={isSearching}
+                            className="bg-black text-white px-6 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
+                        >
+                            {isSearching ? '...' : <Search className="w-6 h-6" />}
+                        </button>
+                    </div>
 
-                                      return (
-                                          <div key={`${group.userId}_${group.raffleId}`} className={`p-5 border-4 border-black rounded-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-[6px_6px_0px_0px_#000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all ${isExpired ? 'bg-red-100 border-red-600' : 'bg-yellow-50'}`}>
-                                              <div className="space-y-2 flex-grow">
-                                                  <div className="flex items-center gap-2">
-                                                    <span className={`font-comic text-xl ${isExpired ? 'text-red-700' : ''}`}>{group.userName}</span>
-                                                    <a href={`https://wa.me/${group.userPhone}`} target="_blank" rel="noreferrer" className="bg-green-400 border-2 border-black p-1 rounded-lg hover:scale-110 transition-transform">
-                                                       <MessageCircle className="w-4 h-4" />
-                                                    </a>
-                                                  </div>
-                                                  <div className="font-bold text-sm text-gray-700">
-                                                      {group.raffleTitle}
-                                                  </div>
-                                                  <div className="flex flex-wrap gap-2 text-xs font-bold">
-                                                      <span className="bg-black text-white px-3 py-1 rounded-full border-2 border-cyan-400">
-                                                          {normalCount} {bonusCount > 0 ? `+ ${bonusCount} REGALO` : ''} TICKETS
-                                                      </span>
-                                                      <span className={`px-3 py-1 rounded-full border-2 border-black flex items-center gap-1 ${isExpired ? 'bg-red-600 text-white shadow-[2px_2px_0px_0px_#000]' : isExpiring ? 'bg-orange-400 text-black' : 'bg-white text-black'}`}>
-                                                        <Clock className="w-3 h-3" />
-                                                        {isExpired ? 'EXPIRADO' : `${minutesLeft}:${secondsLeft < 10 ? `0${secondsLeft}` : secondsLeft}`}
-                                                      </span>
-                                                  </div>
-                                              </div>
-                                              
-                                              <button 
-                                                  onClick={() => setSelectedGroupId(group.id)}
-                                                  className={`w-full sm:w-auto font-bold px-6 py-3 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center gap-2 ${isExpired ? 'bg-red-400 text-white' : 'bg-cyan-400 text-black hover:bg-cyan-300'}`}
-                                              >
-                                                  <Eye className="w-5 h-5" />
-                                                  GESTIONAR
-                                              </button>
-                                          </div>
-                                      );
-                                  })
-                              )}
-                          </div>
-                      </div>
+                    {searchResults.length > 0 && (
+                        <div className="space-y-3 bg-gray-100 p-4 rounded-3xl border-4 border-black shadow-inner max-h-[500px] overflow-y-auto">
+                            {searchResults.map(t => (
+                                <div key={t.id} className="bg-white border-2 border-black p-4 rounded-xl flex justify-between items-center gap-4 shadow-[3px_3px_0px_0px_#000]">
+                                    <div>
+                                        <p className="font-black text-lg">#{t.ticketNumber} - {t.userName}</p>
+                                        <p className="text-xs font-bold text-gray-500 uppercase">{t.status} | {new Date(t.createdAt?.toMillis?.() || t.createdAt).toLocaleString()}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {t.status !== 'pending_payment' && (
+                                            <button 
+                                                onClick={() => recoverTicket(t)}
+                                                className="p-3 bg-yellow-300 border-2 border-black rounded-xl hover:scale-105 transition-transform shadow-[2px_2px_0px_0px_#000]"
+                                                title="Revertir a pendiente"
+                                            >
+                                                <RotateCcw className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                        {dbUser?.role === 'admin' && (
+                                            <button 
+                                                onClick={() => deleteTicket(t)}
+                                                className="p-3 bg-red-100 text-red-500 border-2 border-black rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-[2px_2px_0px_0px_#000]"
+                                            >
+                                                <XCircle className="w-5 h-5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+          </div>
+      )}
 
-                      {/* SUBSECCIÓN: RECUPERAR TICKETS */}
-                      <div className="pt-10 border-t-8 border-black">
-                          <div className="flex items-center gap-3 mb-6">
-                              <div className="bg-red-400 border-4 border-black px-4 py-1 rounded-2xl shadow-[4px_4px_0px_0px_#000] text-white">
-                                  <p className="font-comic text-xl">RECUPERAR TICKETS</p>
-                              </div>
-                              <div className="h-1 flex-grow bg-black rounded-full opacity-10"></div>
-                          </div>
-
-                          <div className="space-y-6">
-                              <div className="flex gap-2">
-                                  <input 
-                                      type="text" 
-                                      value={searchQuery}
-                                      onChange={e => setSearchQuery(e.target.value)}
-                                      onKeyDown={e => e.key === 'Enter' && handleSearchTickets()}
-                                      placeholder="Buscar por Nombre, DNI o Ticket..."
-                                      className="flex-grow border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold"
-                                  />
-                                  <button 
-                                      onClick={handleSearchTickets}
-                                      disabled={isSearching}
-                                      className="bg-black text-white p-3 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
-                                  >
-                                      {isSearching ? '...' : <Search className="w-6 h-6" />}
-                                  </button>
-                              </div>
-
-                              {searchResults.length > 0 && (
-                                  <div className="space-y-3 bg-gray-100 p-4 rounded-3xl border-4 border-black shadow-inner max-h-[400px] overflow-y-auto">
-                                      {searchResults.map(t => (
-                                          <div key={t.id} className="bg-white border-2 border-black p-3 rounded-xl flex justify-between items-center gap-4">
-                                              <div className="text-xs">
-                                                  <p className="font-black">#{t.ticketNumber} - {t.userName}</p>
-                                                  <p className="text-gray-500">{t.status} | {new Date(t.createdAt?.toMillis?.() || t.createdAt).toLocaleDateString()}</p>
-                                              </div>
-                                              <div className="flex gap-2">
-                                                  {t.status !== 'pending_payment' && (
-                                                      <button 
-                                                          onClick={() => recoverTicket(t)}
-                                                          title="Poner en pendiente y reiniciar tiempo"
-                                                          className="p-2 bg-yellow-300 border-2 border-black rounded-lg hover:scale-110 transition-transform"
-                                                      >
-                                                          <RotateCcw className="w-4 h-4" />
-                                                      </button>
-                                                  )}
-                                                  <button 
-                                                      onClick={() => deleteTicket(t)}
-                                                      className="p-2 bg-red-100 text-red-500 border-2 border-black rounded-lg hover:bg-red-500 hover:text-white transition-all"
-                                                  >
-                                                      <XCircle className="w-4 h-4" />
-                                                  </button>
-                                              </div>
-                                          </div>
-                                      ))}
-                                  </div>
-                              )}
-                          </div>
-                      </div>
-                  </div>
+      {activeTab === 'raffles_create' && (
+        <div className="bg-white border-4 sm:border-8 border-black rounded-3xl sm:rounded-[3rem] p-4 sm:p-8 shadow-[12px_12px_0px_0px_#ff4d4d] sm:shadow-[12px_12px_0px_0px_#ff4d4d] max-w-4xl w-full mx-auto">
+              <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
+                <div className="bg-red-500 p-2 border-2 sm:border-4 border-black rounded-xl">
+                    <Ticket className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none">Crear Sorteo</h2>
               </div>
-              
-              {/* COLUMNA DERECHA: CREAR SORTEO */}
-              <div className="bg-white border-8 border-black rounded-[3rem] p-8 shadow-[12px_12px_0px_0px_#ff4d4d] transform lg:rotate-1">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="bg-red-500 p-2 border-4 border-black rounded-xl">
-                        <Ticket className="w-8 h-8 text-white" />
-                    </div>
-                    <h2 className="text-3xl font-comic text-black uppercase leading-none">Crear Sorteo</h2>
+
+              <form onSubmit={handleCreateRaffle} className="space-y-4 sm:space-y-6">
+                  <div className="space-y-1">
+                      <label className="block text-sm font-black ml-2 uppercase">Título del Sorteo</label>
+                      <input 
+                        type="text" 
+                        value={title} 
+                        onChange={e=>setTitle(e.target.value)} 
+                        required 
+                        placeholder="Ej: Sorteo de una Laptop"
+                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold" 
+                      />
                   </div>
 
-                  <form onSubmit={handleCreateRaffle} className="space-y-6">
+                  <div className="space-y-1">
+                      <label className="block text-sm font-black ml-2 uppercase">Descripción / Detalles</label>
+                      <textarea 
+                        value={description} 
+                        onChange={e=>setDescription(e.target.value)} 
+                        required 
+                        placeholder="Detalla los premios y condiciones..."
+                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold min-h-[120px]" 
+                      />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1">
-                          <label className="block text-sm font-black ml-2 uppercase">Título del Sorteo</label>
+                          <label className="block text-sm font-black ml-2 uppercase">Premio Principal (1° Puesto)</label>
                           <input 
                             type="text" 
-                            value={title} 
-                            onChange={e=>setTitle(e.target.value)} 
+                            value={prize} 
+                            onChange={e=>setPrize(e.target.value)} 
                             required 
-                            placeholder="Ej: Sorteo de una Laptop"
-                            className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold" 
-                          />
-                      </div>
-
-                      <div className="space-y-1">
-                          <label className="block text-sm font-black ml-2 uppercase">Descripción / Detalles</label>
-                          <textarea 
-                            value={description} 
-                            onChange={e=>setDescription(e.target.value)} 
-                            required 
-                            placeholder="Detalla los premios y condiciones..."
-                            className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold min-h-[120px]" 
-                          />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                          <div className="space-y-1">
-                              <label className="block text-sm font-black ml-2 uppercase">Premio Principal</label>
-                              <input 
-                                type="text" 
-                                value={prize} 
-                                onChange={e=>setPrize(e.target.value)} 
-                                required 
-                                className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
-                              />
-                          </div>
-                          <div className="space-y-1">
-                              <label className="block text-sm font-black ml-2 uppercase">Precio Ticket (S/)</label>
-                              <input 
-                                type="number" 
-                                value={price} 
-                                onChange={e=>setPrice(e.target.value)} 
-                                required 
-                                className="w-full sm:w-40 border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
-                              />
-                          </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                          <div className="space-y-1">
-                              <label className="block text-sm font-black ml-2 uppercase">Total de Tickets</label>
-                              <input 
-                                type="number" 
-                                value={total} 
-                                onChange={e=>setTotal(e.target.value)} 
-                                required 
-                                className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
-                              />
-                          </div>
-                          <div className="space-y-1">
-                              <label className="block text-sm font-black ml-2 uppercase">Fecha de Finalización</label>
-                              <div className="flex flex-col sm:flex-row gap-4">
-                                <input 
-                                  type="date" 
-                                  value={endDateInput} 
-                                  onChange={e=>setEndDateInput(e.target.value)} 
-                                  required 
-                                  className="flex-grow border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold w-full" 
-                                />
-                                <input 
-                                  type="time" 
-                                  value={endTimeInput} 
-                                  onChange={e=>setEndTimeInput(e.target.value)} 
-                                  required 
-                                  className="w-full sm:w-40 border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
-                                />
-                              </div>
-                          </div>
-                          <div className="space-y-1">
-                              <label className="block text-sm font-black ml-2 uppercase">Meta para Regalo (Ej: 10)</label>
-                              <div className="flex items-center gap-3">
-                                  <input 
-                                    type="number" 
-                                    value={bonusThreshold} 
-                                    onChange={e=>setBonusThreshold(e.target.value)} 
-                                    placeholder="Cada X tickets dar 1 gratis"
-                                    className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
-                                  />
-                              </div>
-                              <p className="text-[10px] font-bold ml-2 text-gray-500">Cada {bonusThreshold || 'X'} tickets comprados se regalará 1 automáticamente.</p>
-                          </div>
-                      </div>
-
-                      <div className="space-y-1">
-                          <label className="block text-sm font-black ml-2 uppercase">URL de la Imagen (Opcional)</label>
-                          <input 
-                            type="text" 
-                            value={imageUrl} 
-                            onChange={e=>setImageUrl(e.target.value)} 
-                            placeholder="https://ejemplo.com/imagen.jpg"
                             className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
                           />
-                          {imageUrl && (
-                            <div className="mt-2 border-4 border-black rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_#000] bg-gray-50 max-w-[200px] aspect-square">
-                              <img src={imageUrl} alt="Vista previa del sorteo" className="w-full h-full object-cover" />
-                            </div>
-                          )}
                       </div>
+                      <div className="space-y-1">
+                          <label className="block text-sm font-black ml-2 uppercase">Precio Ticket (S/)</label>
+                          <input 
+                            type="number" 
+                            value={price} 
+                            onChange={e=>setPrice(e.target.value)} 
+                            required 
+                            className="w-full sm:w-40 border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                          />
+                      </div>
+                  </div>
 
-                      <button 
-                        type="submit" 
-                        className="w-full bg-red-500 text-white font-comic text-2xl py-5 rounded-4xl border-4 border-black shadow-[8px_8px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4"
-                      >
-                        ¡PUBLICAR SORTEO!
-                      </button>
-                  </form>
-              </div>
+                  <div className="space-y-4">
+                    <button 
+                      type="button"
+                      onClick={() => setShowExtraPrizes(!showExtraPrizes)}
+                      className={`text-sm font-bold flex items-center gap-2 px-4 py-2 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] transition-all hover:bg-gray-100 ${showExtraPrizes ? 'bg-yellow-100' : 'bg-white'}`}
+                    >
+                      {showExtraPrizes ? '⊖ Quitar Premios Extra' : '⊕ Agregar 2° y 3° Puesto'}
+                    </button>
+
+                    {showExtraPrizes && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 border-4 border-dashed border-black rounded-3xl bg-gray-50 animate-in fade-in slide-in-from-top-2">
+                         <div className="space-y-1">
+                            <label className="block text-sm font-black ml-2 uppercase">2° Puesto</label>
+                            <input 
+                              type="text" 
+                              value={prize2} 
+                              onChange={e=>setPrize2(e.target.value)} 
+                              placeholder="Segundo premio (Opcional)"
+                              className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-sm font-black ml-2 uppercase">3° Puesto</label>
+                            <input 
+                              type="text" 
+                              value={prize3} 
+                              onChange={e=>setPrize3(e.target.value)} 
+                              placeholder="Tercer premio (Opcional)"
+                              className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                            />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-1">
+                          <label className="block text-sm font-black ml-2 uppercase">Total de Tickets</label>
+                          <input 
+                            type="number" 
+                            value={total} 
+                            onChange={e=>setTotal(e.target.value)} 
+                            required 
+                            className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                          />
+                      </div>
+                      <div className="space-y-1">
+                          <label className="block text-sm font-black ml-2 uppercase">Fecha de Finalización</label>
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            <input 
+                              type="date" 
+                              value={endDateInput} 
+                              onChange={e=>setEndDateInput(e.target.value)} 
+                              required 
+                              className="flex-grow border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold w-full" 
+                            />
+                            <input 
+                              type="time" 
+                              value={endTimeInput} 
+                              onChange={e=>setEndTimeInput(e.target.value)} 
+                              required 
+                              className="w-full sm:w-40 border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                            />
+                          </div>
+                      </div>
+                      <div className="space-y-1">
+                          <label className="block text-sm font-black ml-2 uppercase">Meta para Regalo (Ej: 10)</label>
+                          <div className="flex items-center gap-3">
+                              <input 
+                                type="number" 
+                                value={bonusThreshold} 
+                                onChange={e=>setBonusThreshold(e.target.value)} 
+                                placeholder="Cada X tickets dar 1 gratis"
+                                className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                              />
+                          </div>
+                          <p className="text-[10px] font-bold ml-2 text-gray-500">Cada {bonusThreshold || 'X'} tickets comprados se regalará 1 automáticamente.</p>
+                      </div>
+                  </div>
+
+                  <div className="space-y-1">
+                      <label className="block text-sm font-black ml-2 uppercase">URL de la Imagen (Opcional)</label>
+                      <input 
+                        type="text" 
+                        value={imageUrl} 
+                        onChange={e=>setImageUrl(e.target.value)} 
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                      />
+                      {imageUrl && (
+                        <div className="mt-2 border-4 border-black rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_#000] bg-gray-50 max-w-[200px] aspect-square">
+                          <img src={imageUrl} alt="Vista previa del sorteo" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="w-full bg-red-500 text-white font-comic text-2xl py-5 rounded-4xl border-4 border-black shadow-[8px_8px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4"
+                  >
+                    ¡PUBLICAR SORTEO!
+                  </button>
+              </form>
           </div>
-          
-          <div className="mt-12 bg-white border-4 border-black rounded-3xl p-8 shadow-[8px_8px_0px_0px_#000]">
-              <h2 className="text-3xl font-comic text-black mb-6">SORTEOS ACTIVOS ({raffles.length})</h2>
-              <div className="overflow-x-auto">
-                  <table className="w-full border-4 border-black text-left rounded-xl overflow-hidden">
+      )}
+
+      {activeTab === 'raffles_list' && (
+          <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[12px_12px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000]">
+              <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6 uppercase">Sorteos Activos ({raffles.length})</h2>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full border-2 sm:border-4 border-black text-left rounded-xl overflow-hidden min-w-[700px]">
                       <thead className="bg-cyan-300 font-comic text-xl border-b-4 border-black">
                           <tr>
                               <th className="p-4 border-r-4 border-black">Título</th>
@@ -747,8 +898,8 @@ export default function AdminDashboard() {
                                       </td>
                                       <td className="p-4 border-r-4 border-black">S/ {((r.soldTickets || 0) * r.ticketPrice).toFixed(2)}</td>
                                   <td className="p-4">
-                                      {r.status === 'active' && (
-                                          <button onClick={() => handleOpenDrawModal(r)} className="bg-yellow-400 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-yellow-500 transition-all">Sortear</button>
+                                      {r.status === 'active' && dbUser?.role === 'admin' && (
+                                          <button onClick={() => handleOpenDrawModal(r)} className="bg-yellow-400 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-yellow-500 transition-all font-bold">Sortear</button>
                                       )}
                                   </td>
                               </tr>
@@ -758,14 +909,13 @@ export default function AdminDashboard() {
                   </table>
               </div>
           </div>
-        </div>
       )}
 
       {activeTab === 'users' && (
-          <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-[8px_8px_0px_0px_#000]">
-              <h2 className="text-3xl font-comic text-black mb-6">USUARIOS REGISTRADOS ({allUsers.length})</h2>
-              <div className="overflow-x-auto">
-                  <table className="w-full border-4 border-black text-left rounded-xl overflow-hidden">
+          <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000]">
+              <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6">USUARIOS REGISTRADOS ({allUsers.length})</h2>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                  <table className="w-full border-2 sm:border-4 border-black text-left rounded-xl overflow-hidden min-w-[800px]">
                       <thead className="bg-cyan-300 font-comic text-xl border-b-4 border-black">
                           <tr>
                               <th className="p-4 border-r-4 border-black">Nombre Completo</th>
@@ -789,17 +939,28 @@ export default function AdminDashboard() {
                                   </td>
                                   <td className="p-4 border-r-4 border-black text-sm">{u.address || '-'}</td>
                                   <td className="p-4 border-r-4 border-black uppercase text-sm">
-                                      <span className={`px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_0px_#000] ${u.role === 'admin' ? 'bg-red-400 text-white' : 'bg-gray-100'}`}>
-                                        {u.role}
-                                      </span>
+                                      <select 
+                                        value={u.role || 'user'} 
+                                        disabled={u.id === user?.uid}
+                                        onChange={(e) => handleUpdateRole(u.id, e.target.value)}
+                                        className={`px-2 py-1 border-2 border-black rounded shadow-[2px_2px_0px_0px_#000] font-black outline-none cursor-pointer disabled:cursor-not-allowed ${u.role === 'admin' ? 'bg-red-400 text-white' : u.role === 'support' ? 'bg-orange-400 text-white' : 'bg-gray-100'}`}
+                                      >
+                                          <option value="user" className="text-black bg-white">USUARIO</option>
+                                          <option value="support" className="text-black bg-white">SOPORTE</option>
+                                          <option value="admin" className="text-black bg-white">ADMIN</option>
+                                      </select>
                                   </td>
                                   <td className="p-4">
                                       {u.id !== user?.uid && (
                                           <button 
-                                            onClick={() => handleToggleAdmin(u.id, u.role)} 
-                                            className={`border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all ${u.role === 'admin' ? 'bg-gray-300' : 'bg-red-400 text-white'}`}
+                                            onClick={() => {
+                                                if (confirm('¿Eliminar este usuario PERMANENTEMENTE?')) {
+                                                    deleteDoc(doc(db, 'users', u.id)).then(() => loadUsers());
+                                                }
+                                            }} 
+                                            className="border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all bg-red-100 text-red-600 hover:bg-red-600 hover:text-white"
                                           >
-                                              {u.role === 'admin' ? 'Quitar Admin' : 'Hacer Admin'}
+                                              Eliminar
                                           </button>
                                       )}
                                   </td>
@@ -812,8 +973,8 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === 'settings' && (
-          <div className="bg-white border-4 border-black rounded-3xl p-8 shadow-[8px_8px_0px_0px_#000] max-w-2xl mx-auto">
-              <h2 className="text-3xl font-comic text-black mb-6">CONFIGURACIÓN DE PAGOS</h2>
+          <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] max-w-2xl mx-auto">
+              <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6">CONFIGURACIÓN DE PAGOS</h2>
               <form onSubmit={handleUpdateSettings} className="space-y-6">
                   <div>
                       <label className="block text-lg font-bold mb-1">Número de Yape / Plin</label>
@@ -827,7 +988,21 @@ export default function AdminDashboard() {
                       />
                   </div>
                   <div>
-                      <label className="block text-lg font-bold mb-1">URL de Imagen Código QR</label>
+                      <label className="block text-lg font-bold mb-1">Código QR (Subir archivo)</label>
+                      <div className="flex flex-col gap-2">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          disabled={isUploading}
+                          className="w-full border-4 border-dashed border-black p-3 rounded-xl bg-gray-50 font-bold cursor-pointer hover:bg-gray-100 transition-colors"
+                        />
+                        <p className="text-xs text-gray-500 font-bold uppercase">Esto guardará la imagen en /public/qrs/ y actualizará la URL automáticamente.</p>
+                      </div>
+                  </div>
+
+                  <div>
+                      <label className="block text-lg font-bold mb-1">URL de Imagen Código QR (o manual)</label>
                       <input 
                         type="text" 
                         value={appSettings.yapeQrUrl} 
@@ -866,20 +1041,25 @@ export default function AdminDashboard() {
       )}
 
       {winnerModalOpen && activeRaffleForDraw && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 backdrop-blur-sm">
-          <div className="flex min-h-full items-center justify-center p-4 py-12">
-            <div className="bg-white border-8 border-black rounded-3xl p-8 max-w-lg w-full relative shadow-[16px_16px_0px_0px_#FFD700]">
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 backdrop-blur-sm sm:p-4">
+          <div className="flex min-h-full items-center justify-center p-2 sm:p-4 py-8 sm:py-12">
+            <div className="bg-white border-4 sm:border-8 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 max-w-lg w-full relative shadow-[8px_8px_0px_0px_#FFD700] sm:shadow-[16px_16px_0px_0px_#FFD700]">
                 {drawState !== 'shuffling' && (
                     <button 
                         onClick={() => setWinnerModalOpen(false)}
-                        className="absolute -top-6 -right-6 bg-red-500 text-white w-12 h-12 rounded-full border-4 border-black text-2xl font-bold hover:scale-110 transition-transform shadow-[4px_4px_0px_0px_#000]"
+                        className="absolute -top-3 -right-3 sm:-top-6 sm:-right-6 bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-black text-xl sm:text-2xl font-bold hover:scale-110 transition-transform shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000]"
                     >
                         X
                     </button>
                 )}
                 
-                <h2 className="text-4xl font-comic text-black text-center mb-6">SORTEO ACTIVO</h2>
-                <h3 className="text-2xl font-bold text-center mb-8 bg-cyan-200 border-4 border-black inline-block px-4 py-2 transform -rotate-2">{activeRaffleForDraw.title}</h3>
+                <h2 className="text-3xl sm:text-4xl font-comic text-black text-center mb-2">SORTEO</h2>
+                <div className="flex justify-center mb-4">
+                    <div className={`px-4 py-1 border-4 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] rotate-1 ${drawingPosition === 1 ? 'bg-yellow-400' : drawingPosition === 2 ? 'bg-cyan-200' : 'bg-purple-300'}`}>
+                        Dibujando para: {drawingPosition}° PUESTO
+                    </div>
+                </div>
+                <h3 className="text-2xl font-bold text-center mb-8 bg-cyan-200 border-4 border-black inline-block px-4 py-2 transform -rotate-2 w-full">{activeRaffleForDraw.title}</h3>
 
                 <div className="bg-gray-100 border-4 border-black rounded-2xl p-6 relative overflow-y-auto max-h-[70vh] shadow-inner mb-8 mt-4">
                     {drawState === 'setup' || drawState === 'idle' ? (
@@ -935,6 +1115,37 @@ export default function AdminDashboard() {
 
                 {drawState === 'setup' && (
                     <div className="text-center">
+                        <div className="mb-6">
+                            <label className="font-black mb-2 block text-sm uppercase">Puesto a Sortear:</label>
+                            <div className="flex justify-center gap-2">
+                                <button 
+                                    onClick={() => setDrawingPosition(1)}
+                                    className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] ${drawingPosition === 1 ? 'bg-yellow-400' : 'bg-white'}`}
+                                >
+                                    1° Lugar
+                                </button>
+                                {activeRaffleForDraw.prize2 && (
+                                    <button 
+                                        onClick={() => setDrawingPosition(2)}
+                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] ${drawingPosition === 2 ? 'bg-cyan-200' : 'bg-white'}`}
+                                    >
+                                        2° Lugar
+                                    </button>
+                                )}
+                                {activeRaffleForDraw.prize3 && (
+                                    <button 
+                                        onClick={() => setDrawingPosition(3)}
+                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] ${drawingPosition === 3 ? 'bg-purple-300' : 'bg-white'}`}
+                                    >
+                                        3° Lugar
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-xs font-bold mt-3 text-gray-500 italic">
+                                Sorteando por: {drawingPosition === 1 ? activeRaffleForDraw.prize : (drawingPosition === 2 ? activeRaffleForDraw.prize2 : activeRaffleForDraw.prize3)}
+                            </p>
+                        </div>
+
                         <label className="font-bold mb-2 block text-lg">El ganador será el ticket sacado al intento nº:</label>
                         <div className="flex gap-4 justify-center items-center mb-4">
                             <input type="number" min="1" max={drawTickets.length} value={attemptTarget} onChange={e => setAttemptTarget(Number(e.target.value))} className="border-4 border-black p-2 font-comic text-2xl w-24 text-center rounded-xl shadow-[4px_4px_0px_#000]" />
@@ -1017,23 +1228,23 @@ export default function AdminDashboard() {
       {/* MODAL DE APROBACIÓN DE ORDEN */}
       <AnimatePresence>
         {selectedGroup && (
-            <div className="fixed inset-0 z-[110] overflow-y-auto flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="fixed inset-0 z-[110] overflow-y-auto flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm">
                 <motion.div 
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className={`bg-white border-8 border-black rounded-[3rem] p-8 max-w-2xl w-full relative shadow-[16px_16px_0px_0px_#000] ${selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) ? 'border-red-600' : ''}`}
+                    className={`bg-white border-4 sm:border-8 border-black rounded-2xl sm:rounded-[3rem] p-4 sm:p-8 max-w-2xl w-full relative shadow-[8px_8px_0px_0px_#000] sm:shadow-[16px_16px_0px_0px_#000] ${selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) ? 'border-red-600' : ''}`}
                 >
                     <button 
                         onClick={() => setSelectedGroupId(null)}
-                        className="absolute -top-4 -right-4 bg-red-500 text-white w-12 h-12 rounded-full border-4 border-black text-2xl font-bold flex items-center justify-center hover:scale-110 transition-transform shadow-[4px_4px_0px_0px_#000]"
+                        className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-black text-xl sm:text-2xl font-bold flex items-center justify-center hover:scale-110 transition-transform shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000]"
                     >
                         X
                     </button>
 
-                    <div className="mb-6">
+                    <div className="mb-4 sm:mb-6">
                         <div className="flex justify-between items-start mb-2">
-                            <h2 className="text-3xl font-comic text-black uppercase leading-none">Detalle de la Orden</h2>
+                            <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none">Orden</h2>
                             {selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) && (
                                 <span className="bg-red-600 text-white px-3 py-1 rounded-full font-black text-xs animate-pulse border-2 border-black shadow-[2px_2px_0px_0px_#000]">
                                     TIEMPO AGOTADO

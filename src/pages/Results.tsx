@@ -64,20 +64,45 @@ export default function Results() {
               <div className="p-8 md:w-2/3 flex flex-col justify-between">
                 <div>
                   <h3 className="text-3xl font-comic text-black mb-2">{raffle.title}</h3>
-                  <p className="text-black font-bold text-lg mb-6">{raffle.prize}</p>
+                  <div className="space-y-1 mb-6">
+                    <p className="text-black font-bold text-lg">1° Puesto: {raffle.prize}</p>
+                    {raffle.prize2 && <p className="text-gray-700 font-bold text-sm">2° Puesto: {raffle.prize2}</p>}
+                    {raffle.prize3 && <p className="text-gray-700 font-bold text-sm">3° Puesto: {raffle.prize3}</p>}
+                  </div>
                 </div>
                 
-                <div className="bg-yellow-200 border-4 border-black rounded-2xl p-6 flex justify-between items-center shadow-[4px_4px_0px_0px_#000] transform rotate-1">
-                  <div>
-                    <p className="text-sm text-black font-bold uppercase tracking-wider mb-1">TICKET GANADOR</p>
-                    <p className="font-comic text-4xl text-red-500 drop-shadow-[2px_2px_0px_#fff]">
-                      {raffle.winningTicketNumber || '-----'}
-                    </p>
+                <div className="space-y-4">
+                  {(raffle.winners && raffle.winners.length > 0) ? (
+                    <div className="space-y-3">
+                      {raffle.winners.sort((a: any, b: any) => a.position - b.position).map((w: any) => (
+                        <div key={`${raffle.id}_${w.position}`} className={`border-4 border-black rounded-2xl p-4 flex justify-between items-center shadow-[4px_4px_0px_0px_#000] ${w.position === 1 ? 'bg-yellow-200 rotate-1' : w.position === 2 ? 'bg-cyan-100 -rotate-1' : 'bg-purple-100 rotate-1'}`}>
+                          <div>
+                            <p className="text-[10px] text-black font-black uppercase tracking-wider mb-1">{w.position}° LUGAR - {w.prize}</p>
+                            <div className="flex items-center gap-3">
+                              <p className="font-comic text-3xl text-red-500 drop-shadow-[1px_1px_0px_#fff]">#{w.ticketNumber}</p>
+                              <p className="font-bold text-sm bg-white px-2 py-0.5 rounded-lg border-2 border-black">{w.userName}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-200 border-4 border-black rounded-2xl p-6 flex justify-between items-center shadow-[4px_4px_0px_0px_#000] transform rotate-1">
+                      <div>
+                        <p className="text-sm text-black font-bold uppercase tracking-wider mb-1">TICKET GANADOR</p>
+                        <p className="font-comic text-4xl text-red-500 drop-shadow-[2px_2px_0px_#fff]">
+                          {raffle.winningTicketNumber || '-----'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-end pt-2">
+                    <button className="flex items-center space-x-2 text-white bg-red-500 border-4 border-black px-4 py-2 rounded-xl hover:bg-black transition-colors font-bold shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none text-sm">
+                      <PlayCircle className="w-5 h-5" />
+                      <span>Ver Sorteo</span>
+                    </button>
                   </div>
-                  <button className="flex items-center space-x-2 text-white bg-red-500 border-4 border-black px-4 py-3 rounded-xl hover:bg-black transition-colors font-bold shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none">
-                    <PlayCircle className="w-6 h-6" />
-                    <span>Ver Sorteo</span>
-                  </button>
                 </div>
               </div>
             </div>

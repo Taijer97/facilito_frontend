@@ -76,7 +76,13 @@ export default function Layout() {
     return () => unsubscribe();
   }, [user, dbUser]);
 
+  const lastSoundTime = useRef<number>(0);
   const playFacilito = () => {
+    const now = Date.now();
+    // Do not play if the last sound was less than 5 seconds ago
+    if (now - lastSoundTime.current < 5000) return;
+    lastSoundTime.current = now;
+
     // 1. Try playing custom sound if exists
     const audio = new Audio('/facilito.mp3');
     audio.play().catch(() => {

@@ -27,9 +27,13 @@ async function startServer() {
     }
   });
 
-  const upload = multer({ storage: storage });
+  const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
 
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   // Ensure public/qrs exists at startup
   const qrDir = path.join(__dirname, 'public', 'qrs');

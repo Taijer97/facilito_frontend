@@ -31,6 +31,15 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Ensure public/qrs exists at startup
+  const qrDir = path.join(__dirname, 'public', 'qrs');
+  if (!fs.existsSync(qrDir)) {
+    fs.mkdirSync(qrDir, { recursive: true });
+  }
+
+  // Serve uploaded QRs explicitly - this makes them accessible at /qrs/...
+  app.use('/qrs', express.static(qrDir));
+
   // API Route for QR Upload
   app.post("/api/upload-qr", (req, res, next) => {
     console.log(`POST /api/upload-qr received`);

@@ -33,15 +33,14 @@ export default function RaffleDetail() {
   };
 
   useEffect(() => {
-    async function loadSettings() {
-        try {
-            const snap = await getDoc(doc(db, 'settings', 'config'));
-            if (snap.exists()) {
-                setSettings(snap.data());
-            }
-        } catch (e) { console.error(e); }
-    }
-    loadSettings();
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snap) => {
+      if (snap.exists()) {
+        setSettings(snap.data());
+      }
+    }, (error) => {
+      console.error("Error fetching settings:", error);
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

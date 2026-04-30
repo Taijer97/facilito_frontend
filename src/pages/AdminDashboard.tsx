@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, orderBy, onSnapshot, where, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../components/AuthProvider';
-import { Search, MessageCircle, Clock, Zap, XCircle, Ticket, CheckCircle, RotateCcw, Eye } from 'lucide-react';
+import { Search, MessageCircle, Clock, Zap, XCircle, Ticket, CheckCircle, RotateCcw, Eye, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import confetti from 'canvas-confetti';
 
 export default function AdminDashboard() {
   const { user, dbUser } = useAuth();
@@ -27,6 +28,14 @@ export default function AdminDashboard() {
   const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string, yapeName: string}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: '', yapeName: ''});
   const [activeTab, setActiveTab] = useState<'tickets' | 'raffles_create' | 'raffles_list' | 'users' | 'settings'>('tickets');
   const [isUploading, setIsUploading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    if (saveStatus !== 'idle' && saveStatus !== 'saving') {
+      const timer = setTimeout(() => setSaveStatus('idle'), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [saveStatus]);
   
   // New Raffle state
   const [title, setTitle] = useState('');
@@ -109,28 +118,55 @@ export default function AdminDashboard() {
     } catch (e) { console.error(e); }
   };
 
-  const handleUpdateSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveSettings = async (settings: any) => {
+    setSaveStatus('saving');
     try {
       await updateDoc(doc(db, 'settings', 'config'), {
-        ...appSettings,
+        ...settings,
         updatedAt: serverTimestamp()
       });
-      alert('Configuración actualizada');
+      setSaveStatus('success');
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#22c55e', '#3b82f6', '#facc15', '#f87171']
+      });
+      return true;
     } catch (e) {
       // If document doesn't exist, try setting it
       try {
         const { setDoc } = await import('firebase/firestore');
         await setDoc(doc(db, 'settings', 'config'), {
-          ...appSettings,
+          ...settings,
           updatedAt: serverTimestamp()
         });
-        alert('Configuración creada');
+        setSaveStatus('success');
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#22c55e', '#3b82f6', '#facc15', '#f87171']
+        });
+        return true;
       } catch (err) {
         console.error(err);
-        alert('Error al guardar configuración');
+        setSaveStatus('error');
+        return false;
       }
     }
+  };
+
+  const handleUpdateSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const settingsToSave = {
+      yapeNumber: appSettings.yapeNumber.trim(),
+      yapeQrUrl: appSettings.yapeQrUrl.trim(),
+      whatsappNumber: appSettings.whatsappNumber.trim(),
+      yapeName: (appSettings.yapeName || '').trim()
+    };
+    setAppSettings(settingsToSave);
+    await saveSettings(settingsToSave);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,6 +174,7 @@ export default function AdminDashboard() {
     if (!file) return;
 
     setIsUploading(true);
+    setSaveStatus('saving');
     const formData = new FormData();
     formData.append('qr', file);
 
@@ -152,11 +189,16 @@ export default function AdminDashboard() {
       }
 
       const data = await response.json();
-      setAppSettings(prev => ({ ...prev, yapeQrUrl: data.url }));
-      alert('Imagen subida con éxito. Recuerda guardar los cambios.');
+      const updatedSettings = { ...appSettings, yapeQrUrl: data.url };
+      setAppSettings(updatedSettings);
+      
+      const saved = await saveSettings(updatedSettings);
+      if (!saved) {
+        setSaveStatus('error');
+      }
     } catch (err) {
       console.error(err);
-      alert('Fallo al subir la imagen');
+      setSaveStatus('error');
     } finally {
       setIsUploading(false);
     }
@@ -975,6 +1017,30 @@ export default function AdminDashboard() {
       {activeTab === 'settings' && (
           <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] max-w-2xl mx-auto">
               <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6">CONFIGURACIÓN DE PAGOS</h2>
+              
+              <AnimatePresence>
+                {saveStatus !== 'idle' && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                    className={`mb-6 p-6 border-4 border-black rounded-2xl flex items-center justify-center gap-4 shadow-[8px_8px_0px_0px_#000] font-black text-xl sm:text-2xl ${
+                      saveStatus === 'saving' ? 'bg-blue-300' :
+                      saveStatus === 'success' ? 'bg-green-400' : 'bg-red-400'
+                    }`}
+                  >
+                    {saveStatus === 'saving' && <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin" />}
+                    {saveStatus === 'success' && <CheckCircle className="w-10 h-10 text-black" />}
+                    {saveStatus === 'error' && <XCircle className="w-10 h-10 text-black" />}
+                    <span className="uppercase tracking-tight">
+                      {saveStatus === 'saving' ? 'Guardando...' :
+                       saveStatus === 'success' ? '¡CAMBIOS GUARDADOS!' :
+                       'ERROR AL GUARDAR'}
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <form onSubmit={handleUpdateSettings} className="space-y-6">
                   <div>
                       <label className="block text-lg font-bold mb-1">Nombre del Titular (Yape / Plin)</label>
@@ -1044,8 +1110,33 @@ export default function AdminDashboard() {
                       </div>
                   )}
 
-                  <button type="submit" className="w-full bg-red-400 text-white font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4">
-                      GUARDAR CONFIGURACIÓN
+                  <button 
+                    type="submit" 
+                    disabled={saveStatus === 'saving'}
+                    className={`w-full text-white font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4 flex items-center justify-center gap-3 ${
+                      saveStatus === 'saving' ? 'bg-blue-400' :
+                      saveStatus === 'success' ? 'bg-green-500' :
+                      saveStatus === 'error' ? 'bg-red-600' : 'bg-red-400'
+                    }`}
+                  >
+                      {saveStatus === 'saving' ? (
+                        <>
+                          <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>GUARDANDO...</span>
+                        </>
+                      ) : saveStatus === 'success' ? (
+                        <>
+                          <CheckCircle className="w-6 h-6" />
+                          <span>¡GUARDADO!</span>
+                        </>
+                      ) : saveStatus === 'error' ? (
+                        <>
+                          <XCircle className="w-6 h-6" />
+                          <span>ERROR</span>
+                        </>
+                      ) : (
+                        "GUARDAR CONFIGURACIÓN"
+                      )}
                   </button>
               </form>
           </div>
@@ -1334,6 +1425,38 @@ export default function AdminDashboard() {
                     </div>
                 </motion.div>
             </div>
+        )}
+      </AnimatePresence>
+
+      {/* Global Saving Notification */}
+      <AnimatePresence>
+        {(saveStatus === 'success' || saveStatus === 'error') && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5, y: -100 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.5, y: -100 }}
+            className={`fixed top-10 left-1/2 -translate-x-1/2 z-[999] px-10 py-6 border-8 border-black rounded-[2rem] shadow-[12px_12px_0px_0px_#000] flex flex-col items-center gap-4 text-center ${
+              saveStatus === 'success' ? 'bg-green-400' : 'bg-red-400'
+            }`}
+          >
+            {saveStatus === 'success' ? (
+              <div className="bg-white p-4 rounded-full border-4 border-black">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+            ) : (
+              <div className="bg-white p-4 rounded-full border-4 border-black">
+                <XCircle className="w-12 h-12 text-red-600" />
+              </div>
+            )}
+            <div>
+              <h3 className="text-3xl font-black uppercase text-black">
+                {saveStatus === 'success' ? '¡ÉXITO!' : '¡ERROR!'}
+              </h3>
+              <p className="text-xl font-bold text-black/80">
+                {saveStatus === 'success' ? 'Configuración guardada correctamente.' : 'No se pudo guardar la configuración.'}
+              </p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

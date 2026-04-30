@@ -35,7 +35,7 @@ async function startServer() {
   app.post("/api/upload-qr", (req, res, next) => {
     console.log(`POST /api/upload-qr received`);
     next();
-  }, upload.single('qr'), (req, res) => {
+  }, upload.single('qr'), (req: any, res: any) => {
     if (!req.file) {
       console.log("Upload failed: No file");
       return res.status(400).json({ error: "No file uploaded" });

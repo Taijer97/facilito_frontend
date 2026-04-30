@@ -181,20 +181,35 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
             <p className="text-black font-semibold text-lg mb-6 bg-white p-3 border-2 border-black shadow-[4px_4px_0px_0px_#000] rounded-xl">{raffle.description || raffle.prize}</p>
             
             <div className="bg-white rounded-2xl p-5 border-4 border-black space-y-4 shadow-[4px_4px_0px_0px_#000] transform rotate-1">
-                <div className="flex justify-between items-center text-lg font-bold border-b-2 border-gray-200 pb-2">
-                    <span className="flex items-center"><Trophy className="w-5 h-5 mr-2 text-yellow-500" /> 1° Premio</span>
-                    <span className="text-red-500">{raffle.prize}</span>
+                <div className="flex justify-between items-start text-lg font-bold border-b-2 border-gray-200 pb-3">
+                    <div className="flex gap-3">
+                        {raffle.imageUrl && <img src={raffle.imageUrl} className="w-12 h-12 rounded-lg border-2 border-black object-cover shadow-[2px_2px_0px_0px_#000]" />}
+                        <span className="flex flex-col">
+                            <span className="flex items-center"><Trophy className="w-4 h-4 mr-1 text-yellow-500" /> 1° Premio</span>
+                            <span className="text-red-500 text-xl leading-none mt-1">{raffle.prize}</span>
+                        </span>
+                    </div>
                 </div>
                 {raffle.prize2 && (
-                    <div className="flex justify-between items-center text-md font-bold border-b-2 border-gray-100 pb-2">
-                        <span className="flex items-center"><Trophy className="w-5 h-5 mr-2 text-cyan-500" /> 2° Premio</span>
-                        <span className="text-black">{raffle.prize2}</span>
+                    <div className="flex justify-between items-start text-md font-bold border-b-2 border-gray-100 pb-2">
+                        <div className="flex gap-2">
+                            {raffle.imageUrl2 && <img src={raffle.imageUrl2} className="w-10 h-10 rounded-lg border-2 border-black object-cover" />}
+                            <span className="flex flex-col">
+                                <span className="flex items-center text-xs"><Trophy className="w-3 h-3 mr-1 text-cyan-500" /> 2° Premio</span>
+                                <span className="text-black">{raffle.prize2}</span>
+                            </span>
+                        </div>
                     </div>
                 )}
                 {raffle.prize3 && (
-                    <div className="flex justify-between items-center text-md font-bold border-b-2 border-gray-100 pb-2">
-                        <span className="flex items-center"><Trophy className="w-5 h-5 mr-2 text-purple-500" /> 3° Premio</span>
-                        <span className="text-black">{raffle.prize3}</span>
+                    <div className="flex justify-between items-start text-md font-bold border-b-2 border-gray-100 pb-2">
+                        <div className="flex gap-2">
+                            {raffle.imageUrl3 && <img src={raffle.imageUrl3} className="w-10 h-10 rounded-lg border-2 border-black object-cover" />}
+                            <span className="flex flex-col">
+                                <span className="flex items-center text-xs"><Trophy className="w-3 h-3 mr-1 text-purple-500" /> 3° Premio</span>
+                                <span className="text-black">{raffle.prize3}</span>
+                            </span>
+                        </div>
                     </div>
                 )}
                 <div className="flex justify-between items-center text-lg font-bold">
@@ -216,25 +231,37 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                     {raffle.winners && raffle.winners.length > 0 && (
                         <div className="w-full space-y-4 py-4">
                             <p className="font-black text-xl uppercase bg-black text-white py-2 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#facc15]">Cuadro de Ganadores</p>
-                            <div className="space-y-3">
-                                {raffle.winners.sort((a: any, b: any) => (a.position || 0) - (b.position || 0)).map((winner: any) => (
-                                    <div key={winner.position} className="flex justify-between items-center bg-white border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] relative overflow-hidden group">
-                                        <div className={`absolute left-0 top-0 bottom-0 w-2 ${winner.position === 1 ? 'bg-yellow-400' : winner.position === 2 ? 'bg-cyan-200' : 'bg-purple-300'}`} />
-                                        <div className="text-left">
-                                            <p className="text-sm font-black text-gray-500 uppercase">
-                                                {winner.position}° PREMIO
-                                            </p>
-                                            <p className="max-w-[200px] truncate text-xs font-bold text-red-400 mb-1">
-                                                {winner.prize || (winner.position === 1 ? raffle.prize : winner.position === 2 ? raffle.prize2 : winner.position === 3 ? raffle.prize3 : '')}
-                                            </p>
-                                            <p className="font-comic text-xl text-black">{maskName(winner.userName)}</p>
+                            <div className="space-y-4">
+                                {raffle.winners.sort((a: any, b: any) => (a.position || 0) - (b.position || 0)).map((winner: any) => {
+                                    const winnerImg = winner.position === 1 ? raffle.imageUrl : (winner.position === 2 ? raffle.imageUrl2 : (winner.position === 3 ? raffle.imageUrl3 : raffle.imageUrl));
+                                    const isFirst = winner.position === 1;
+                                    
+                                    return (
+                                        <div key={winner.position} className={`flex flex-col sm:flex-row border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] overflow-hidden ${isFirst ? 'bg-yellow-200 scale-[1.03] my-4 ring-4 ring-yellow-400 ring-offset-2' : winner.position === 2 ? 'bg-cyan-100' : 'bg-purple-100'}`}>
+                                            {winnerImg && (
+                                                <div className={`sm:w-20 flex-shrink-0 border-b-4 sm:border-b-0 sm:border-r-4 border-black ${isFirst ? 'sm:w-24' : ''}`}>
+                                                    <img src={winnerImg} className="w-full h-full object-cover aspect-video sm:aspect-square" />
+                                                </div>
+                                            )}
+                                            <div className="p-4 flex-grow flex justify-between items-center">
+                                                <div className="text-left">
+                                                    <p className={`font-black uppercase flex items-center gap-1 ${isFirst ? 'text-sm text-yellow-800' : 'text-[10px] text-gray-500'}`}>
+                                                        <Trophy className={`w-3 h-3 ${isFirst ? 'text-yellow-600' : 'text-gray-400'}`} />
+                                                        {winner.position}° PREMIO {isFirst ? '🏆' : ''}
+                                                    </p>
+                                                    <p className={`max-w-[200px] truncate font-bold text-red-500 ${isFirst ? 'text-sm mb-1' : 'text-xs'}`}>
+                                                        {winner.prize || (winner.position === 1 ? raffle.prize : winner.position === 2 ? raffle.prize2 : winner.position === 3 ? raffle.prize3 : '')}
+                                                    </p>
+                                                    <p className={`font-comic text-black ${isFirst ? 'text-2xl' : 'text-xl'}`}>{maskName(winner.userName)}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className={`font-black text-red-600 ${isFirst ? 'text-4xl' : 'text-2xl'}`}>#{winner.ticketNumber}</p>
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Ticket Ganador</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="font-black text-2xl text-red-500">#{winner.ticketNumber}</p>
-                                            <p className="text-[10px] font-bold text-gray-400">TICKET GANADOR</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

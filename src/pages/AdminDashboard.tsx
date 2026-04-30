@@ -43,10 +43,12 @@ export default function AdminDashboard() {
   const [prize, setPrize] = useState('');
   const [prize2, setPrize2] = useState('');
   const [prize3, setPrize3] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrl2, setImageUrl2] = useState('');
+  const [imageUrl3, setImageUrl3] = useState('');
   const [showExtraPrizes, setShowExtraPrizes] = useState(false);
   const [price, setPrice] = useState('5');
   const [total, setTotal] = useState('100');
-  const [imageUrl, setImageUrl] = useState('');
   const [bonusThreshold, setBonusThreshold] = useState('10');
   const [endDateInput, setEndDateInput] = useState(() => {
     const d = new Date();
@@ -252,13 +254,14 @@ export default function AdminDashboard() {
               prize3: showExtraPrizes ? prize3 : '',
               ticketPrice: Number(price),
               totalTickets: Number(total),
-              soldTickets: 0,
               status: 'active',
               endDate,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
               description,
               imageUrl,
+              imageUrl2: showExtraPrizes ? imageUrl2 : '',
+              imageUrl3: showExtraPrizes ? imageUrl3 : '',
               bonusThreshold: Number(bonusThreshold) || 0,
               winnerTicketId: '',
               winnerUserId: '',
@@ -271,6 +274,8 @@ export default function AdminDashboard() {
           setPrize3('');
           setShowExtraPrizes(false);
           setImageUrl(''); 
+          setImageUrl2('');
+          setImageUrl3('');
           setDescription('');
           setPrice('5');
           setTotal('100');
@@ -368,6 +373,29 @@ export default function AdminDashboard() {
         handleSearchTickets();
     } catch (e) {
         console.error(e);
+    }
+  };
+
+  const handleMarkClaimed = async (raffleId: string, winnerTicketId: string, isClaimed: boolean) => {
+    try {
+      const raffle = raffles.find(r => r.id === raffleId);
+      if (!raffle) return;
+      
+      const updatedWinners = (raffle.winners || []).map((w: any) => {
+        if (w.ticketId === winnerTicketId) {
+          return { ...w, claimed: isClaimed };
+        }
+        return w;
+      });
+      
+      await updateDoc(doc(db, 'raffles', raffleId), {
+        winners: updatedWinners,
+        updatedAt: serverTimestamp()
+      });
+      
+      loadAdminData();
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -484,7 +512,7 @@ export default function AdminDashboard() {
               userName: winnerSelected.userName,
               ticketNumber: winnerSelected.ticketNumber,
               position: drawingPosition,
-              prize: drawingPosition === 1 ? activeRaffleForDraw.prize : (drawingPosition === 2 ? activeRaffleForDraw.prize2 : activeRaffleForDraw.prize3),
+              prize: (drawingPosition === 1 ? activeRaffleForDraw.prize : (drawingPosition === 2 ? activeRaffleForDraw.prize2 : activeRaffleForDraw.prize3)) || activeRaffleForDraw.prize,
               drawnAt: new Date().getTime()
           };
 
@@ -497,6 +525,9 @@ export default function AdminDashboard() {
               winners: updatedWinners,
               updatedAt: serverTimestamp()
           };
+
+          // Update local state to prevent overwriting in consecutive draws
+          setActiveRaffleForDraw({ ...activeRaffleForDraw, winners: updatedWinners });
 
           // If we are drawing the 1st prize (primary winner), we can optionally end the raffle
           if (drawingPosition === 1) {
@@ -808,25 +839,59 @@ export default function AdminDashboard() {
 
                     {showExtraPrizes && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 border-4 border-dashed border-black rounded-3xl bg-gray-50 animate-in fade-in slide-in-from-top-2">
-                         <div className="space-y-1">
-                            <label className="block text-sm font-black ml-2 uppercase">2° Puesto</label>
-                            <input 
-                              type="text" 
-                              value={prize2} 
-                              onChange={e=>setPrize2(e.target.value)} 
-                              placeholder="Segundo premio (Opcional)"
-                              className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
-                            />
+                         <div className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="block text-sm font-black ml-2 uppercase">2° Puesto - Premio</label>
+                                <input 
+                                  type="text" 
+                                  value={prize2} 
+                                  onChange={e=>setPrize2(e.target.value)} 
+                                  placeholder="Segundo premio (Opcional)"
+                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-sm font-black ml-2 uppercase">2° Puesto - URL Imagen</label>
+                                <input 
+                                  type="text" 
+                                  value={imageUrl2} 
+                                  onChange={e=>setImageUrl2(e.target.value)} 
+                                  placeholder="https://ejemplo.com/premio2.jpg"
+                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                />
+                                {imageUrl2 && (
+                                    <div className="mt-2 border-2 border-black rounded-xl overflow-hidden shadow-[2px_2px_0px_0px_#000] h-16 w-16">
+                                        <img src={imageUrl2} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="block text-sm font-black ml-2 uppercase">3° Puesto</label>
-                            <input 
-                              type="text" 
-                              value={prize3} 
-                              onChange={e=>setPrize3(e.target.value)} 
-                              placeholder="Tercer premio (Opcional)"
-                              className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
-                            />
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="block text-sm font-black ml-2 uppercase">3° Puesto - Premio</label>
+                                <input 
+                                  type="text" 
+                                  value={prize3} 
+                                  onChange={e=>setPrize3(e.target.value)} 
+                                  placeholder="Tercer premio (Opcional)"
+                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-sm font-black ml-2 uppercase">3° Puesto - URL Imagen</label>
+                                <input 
+                                  type="text" 
+                                  value={imageUrl3} 
+                                  onChange={e=>setImageUrl3(e.target.value)} 
+                                  placeholder="https://ejemplo.com/premio3.jpg"
+                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                />
+                                {imageUrl3 && (
+                                    <div className="mt-2 border-2 border-black rounded-xl overflow-hidden shadow-[2px_2px_0px_0px_#000] h-16 w-16">
+                                        <img src={imageUrl3} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
                       </div>
                     )}
@@ -949,9 +1014,23 @@ export default function AdminDashboard() {
                                           <div className="flex flex-col gap-1">
                                               {r.winners && r.winners.length > 0 ? (
                                                   r.winners.sort((a:any, b:any) => a.position - b.position).map((w: any) => (
-                                                      <div key={w.position} className="text-xs bg-gray-100 p-1 rounded border border-black shadow-[1px_1px_0px_#000]">
-                                                          <span className="font-black">{w.position}°:</span> {w.ticketNumber} - {w.userName}
-                                                          <div className="text-[10px] text-red-500 truncate mt-0.5">{w.prize}</div>
+                                                      <div key={w.position} className={`text-xs p-1 rounded border border-black shadow-[1px_1px_0px_#000] relative group ${w.claimed ? 'bg-green-100 opacity-75' : 'bg-white'}`}>
+                                                          <div className="flex justify-between items-start">
+                                                              <div>
+                                                                  <span className="font-black">{w.position}°:</span> {w.ticketNumber} - {w.userName}
+                                                                  <div className="text-[10px] text-red-500 truncate mt-0.5">
+                                                                    {w.prize || (w.position === 1 ? r.prize : w.position === 2 ? r.prize2 : w.position === 3 ? r.prize3 : '')}
+                                                                  </div>
+                                                                  {w.claimed && <div className="text-[9px] text-green-600 font-bold uppercase mt-0.5">✓ Entregado</div>}
+                                                              </div>
+                                                              <button 
+                                                                onClick={() => handleMarkClaimed(r.id, w.ticketId, !w.claimed)}
+                                                                className={`p-1 rounded border border-black shadow-[1px_1px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all ${w.claimed ? 'bg-yellow-200' : 'bg-green-400'}`}
+                                                                title={w.claimed ? 'Marcar como pendiente' : 'Marcar como entregado'}
+                                                              >
+                                                                {w.claimed ? <RotateCcw className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
+                                                              </button>
+                                                          </div>
                                                       </div>
                                                   ))
                                               ) : (
@@ -1339,7 +1418,7 @@ export default function AdminDashboard() {
                 {drawState === 'winner' && (
                     <div className="flex flex-col gap-4">
                         <a 
-                            href={`https://wa.me/${currentDisplayTicket?.userPhone?.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Felicidades ${currentDisplayTicket?.userName}! Eres el ganador del sorteo "${activeRaffleForDraw?.title}" con tu ticket #${currentDisplayTicket?.ticketNumber}.`)}`}
+                            href={`https://wa.me/${currentDisplayTicket?.userPhone?.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Felicidades ${currentDisplayTicket?.userName}! Eres el ganador del ${drawingPosition}° PUESTO en el sorteo "${activeRaffleForDraw?.title}" con tu ticket #${currentDisplayTicket?.ticketNumber}.`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full bg-green-500 text-white font-comic text-xl sm:text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all text-center flex justify-center items-center gap-2"

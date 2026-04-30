@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, orderBy, getDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../components/AuthProvider';
-import { Ticket as TicketIcon, Clock, CheckCircle2, XCircle, Search } from 'lucide-react';
+import { Ticket as TicketIcon, Clock, CheckCircle2, XCircle, Search, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router';
 
 export default function UserDashboard() {
   const { user, loading, dbUser } = useAuth();
   const [tickets, setTickets] = useState<any[]>([]);
   const [raffles, setRaffles] = useState<Record<string, any>>({});
+  const [settings, setSettings] = useState<any>(null);
   const [fetching, setFetching] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'participating' | 'winner'>('participating');
 
@@ -20,6 +21,12 @@ export default function UserDashboard() {
 
     async function loadData() {
         try {
+            // Fetch settings
+            const settSnap = await getDoc(doc(db, 'settings', 'config'));
+            if (settSnap.exists()) {
+                setSettings(settSnap.data());
+            }
+
             // Fetch user's tickets
             const q = query(
                 collection(db, 'tickets'),
@@ -82,6 +89,18 @@ export default function UserDashboard() {
     groups[rId].push(ticket);
     return groups;
   }, {} as Record<string, any[]>);
+
+  const handleClaimPrize = (ticket: any, raffle: any) => {
+    if (!settings?.whatsappNumber) return;
+    
+    const winner = raffle.winners?.find((w: any) => w.ticketId === ticket.id);
+    const prizeName = winner?.prize || (winner?.position === 1 ? raffle.prize : winner?.position === 2 ? raffle.prize2 : winner?.position === 3 ? raffle.prize3 : raffle.prize);
+    const positionText = winner?.position ? `${winner.position}° puesto` : 'un premio';
+    
+    const message = `¡Hola! Soy ${dbUser?.name || user?.displayName || 'un ganador'}, gané ${positionText} en el sorteo "${raffle.title}" con el ticket #${ticket.ticketNumber} y me gustaría reclamar mi premio: ${prizeName}.`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodedMessage}`, '_blank');
+  };
 
   if (loading || fetching) return <div className="p-20 text-center font-comic text-2xl">CARGANDO TU PANEL...</div>;
   if (!user) return <div className="p-20 text-center font-comic text-2xl text-red-500">DEBES INICIAR SESIÓN PARA VER TU PANEL.</div>;
@@ -220,16 +239,39 @@ export default function UserDashboard() {
                                         
                                             {raffle && (
                                                 <div className="mt-auto space-y-2 pt-3 border-t-2 border-dashed border-gray-200 text-sm font-bold">
+                                                    {ticket.status === 'won' && (() => {
+                                                        const winner = raffle.winners?.find((w: any) => w.ticketId === ticket.id);
+                                                        return winner ? (
+                                                            <div className="flex justify-between items-center mb-1 text-red-500 italic">
+                                                                <span>Posición:</span>
+                                                                <span>{winner.position}° PUESTO</span>
+                                                            </div>
+                                                        ) : null;
+                                                    })()}
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-gray-400">{ticket.status === 'won' ? '¡Premio ganado!' : 'Premio:'}</span>
                                                         <span className="text-black line-clamp-1 max-w-[120px]">
                                                             {ticket.status === 'won' 
-                                                                ? (raffle.winners?.find((w: any) => w.ticketId === ticket.id)?.prize || raffle.prize)
+                                                                ? (() => {
+                                                                    const winner = raffle.winners?.find((w: any) => w.ticketId === ticket.id);
+                                                                    if (!winner) return raffle.prize;
+                                                                    return winner.prize || (winner.position === 1 ? raffle.prize : winner.position === 2 ? raffle.prize2 : winner.position === 3 ? raffle.prize3 : '');
+                                                                  })()
                                                                 : raffle.prize
                                                             }
                                                         </span>
                                                     </div>
                                                 </div>
+                                            )}
+                                            
+                                            {ticket.status === 'won' && (
+                                                <button 
+                                                    onClick={() => handleClaimPrize(ticket, raffle)}
+                                                    className="mt-4 w-full bg-green-500 border-2 border-black text-white font-bold py-2 rounded-xl flex items-center justify-center gap-2 shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all uppercase text-xs"
+                                                >
+                                                    <MessageCircle className="w-4 h-4" />
+                                                    Reclamar Premio
+                                                </button>
                                             )}
                                             
                                             {isPending && !isExpired && (

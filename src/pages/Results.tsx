@@ -28,6 +28,18 @@ export default function Results() {
     loadPastRaffles();
   }, []);
 
+  const maskName = (name: string) => {
+    if (!name) return '';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) return name;
+
+    return parts.map((part, index) => {
+      if (index === 0) return part; // Keep first name
+      if (part.length <= 1) return part;
+      return part[0] + '*'.repeat(Math.min(part.length - 1, 5)); // Mask surnames, limit to 5 stars for a cleaner look or use actual length
+    }).join(' ');
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-16">
@@ -73,14 +85,17 @@ export default function Results() {
                 
                 <div className="space-y-4">
                   {(raffle.winners && raffle.winners.length > 0) ? (
-                    <div className="space-y-3">
-                      {raffle.winners.sort((a: any, b: any) => a.position - b.position).map((w: any) => (
+                    <div className="space-y-4">
+                      {raffle.winners.sort((a: any, b: any) => (a.position || 0) - (b.position || 0)).map((w: any) => (
                         <div key={`${raffle.id}_${w.position}`} className={`border-4 border-black rounded-2xl p-4 flex justify-between items-center shadow-[4px_4px_0px_0px_#000] ${w.position === 1 ? 'bg-yellow-200 rotate-1' : w.position === 2 ? 'bg-cyan-100 -rotate-1' : 'bg-purple-100 rotate-1'}`}>
-                          <div>
-                            <p className="text-[10px] text-black font-black uppercase tracking-wider mb-1">{w.position}° LUGAR - {w.prize}</p>
-                            <div className="flex items-center gap-3">
-                              <p className="font-comic text-3xl text-red-500 drop-shadow-[1px_1px_0px_#fff]">#{w.ticketNumber}</p>
-                              <p className="font-bold text-sm bg-white px-2 py-0.5 rounded-lg border-2 border-black">{w.userName}</p>
+                          <div className="flex-grow">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Trophy className={`w-3 h-3 ${w.position === 1 ? 'text-yellow-600' : 'text-gray-400'}`} />
+                                <p className="text-[10px] text-black font-black uppercase tracking-wider">{w.position}° LUGAR {w.prize ? `- ${w.prize}` : ''}</p>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-start gap-3 flex-wrap">
+                                <p className="font-comic text-3xl text-red-500 drop-shadow-[1px_1px_0px_#fff]">#{w.ticketNumber}</p>
+                                <p className="font-bold text-sm bg-white px-3 py-1 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000]">{maskName(w.userName)}</p>
                             </div>
                           </div>
                         </div>

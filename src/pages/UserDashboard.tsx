@@ -221,8 +221,13 @@ export default function UserDashboard() {
                                             {raffle && (
                                                 <div className="mt-auto space-y-2 pt-3 border-t-2 border-dashed border-gray-200 text-sm font-bold">
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-gray-400">Premio:</span>
-                                                        <span className="text-black line-clamp-1 max-w-[120px]">{raffle.prize}</span>
+                                                        <span className="text-gray-400">{ticket.status === 'won' ? '¡Premio ganado!' : 'Premio:'}</span>
+                                                        <span className="text-black line-clamp-1 max-w-[120px]">
+                                                            {ticket.status === 'won' 
+                                                                ? (raffle.winners?.find((w: any) => w.ticketId === ticket.id)?.prize || raffle.prize)
+                                                                : raffle.prize
+                                                            }
+                                                        </span>
                                                     </div>
                                                 </div>
                                             )}

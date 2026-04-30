@@ -139,6 +139,17 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
     window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodedMessage}`, '_blank');
   };
 
+  const maskName = (name: string) => {
+    if (!name) return '';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 1) return name;
+    return parts.map((part, index) => {
+      if (index === 0) return part;
+      if (part.length <= 1) return part;
+      return part[0] + '*'.repeat(Math.min(part.length - 1, 5));
+    }).join(' ');
+  };
+
   if (loading) return <div className="p-20 text-center font-comic text-2xl">CARGANDO SORTEO...</div>;
   if (!raffle) return <div className="p-20 text-center font-comic text-2xl text-red-500 bg-white border-4 border-black m-10 shadow-[8px_8px_0px_0px_#000]">SORTEO NO ENCONTRADO</div>;
 
@@ -197,14 +208,60 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
           <div className="md:w-1/2 p-8 bg-white relative">
              {raffle.status !== 'active' ? (
                 <div className="h-full flex flex-col justify-center items-center text-center space-y-6">
-                    <div className="w-24 h-24 bg-red-100 border-4 border-black rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_#000] transform -rotate-12">
-                        <Clock className="w-12 h-12 text-red-500" />
+                    <div className="w-20 h-20 bg-yellow-400 border-4 border-black rounded-full flex items-center justify-center shadow-[4px_4px_0px_0px_#000] animate-bounce">
+                        <Trophy className="w-10 h-10 text-black" />
                     </div>
-                    <h3 className="text-4xl font-comic text-black">SORTEO CERRADO</h3>
-                    <p className="text-xl font-bold">Este sorteo ya no acepta participantes.</p>
+                    <h3 className="text-4xl font-comic text-black">¡SORTEO FINALIZADO!</h3>
+                    
+                    {raffle.winners && raffle.winners.length > 0 && (
+                        <div className="w-full space-y-4 py-4">
+                            <p className="font-black text-xl uppercase bg-black text-white py-2 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#facc15]">Cuadro de Ganadores</p>
+                            <div className="space-y-3">
+                                {raffle.winners.sort((a: any, b: any) => (a.position || 0) - (b.position || 0)).map((winner: any) => (
+                                    <div key={winner.position} className="flex justify-between items-center bg-white border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] relative overflow-hidden group">
+                                        <div className={`absolute left-0 top-0 bottom-0 w-2 ${winner.position === 1 ? 'bg-yellow-400' : winner.position === 2 ? 'bg-cyan-200' : 'bg-purple-300'}`} />
+                                        <div className="text-left">
+                                            <p className="text-sm font-black text-gray-500 uppercase">
+                                                {winner.position}° PREMIO
+                                            </p>
+                                            <p className="max-w-[200px] truncate text-xs font-bold text-red-400 mb-1">
+                                                {winner.prize || (winner.position === 1 ? raffle.prize : winner.position === 2 ? raffle.prize2 : winner.position === 3 ? raffle.prize3 : '')}
+                                            </p>
+                                            <p className="font-comic text-xl text-black">{maskName(winner.userName)}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-black text-2xl text-red-500">#{winner.ticketNumber}</p>
+                                            <p className="text-[10px] font-bold text-gray-400">TICKET GANADOR</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    <button 
+                        onClick={() => navigate('/')}
+                        className="bg-cyan-400 border-4 border-black px-8 py-3 rounded-2xl font-comic text-xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4"
+                    >
+                        VER OTROS SORTEOS
+                    </button>
                 </div>
              ) : (
                 <>
+                    {/* If active but has some winners (like 2nd or 3rd) */}
+                    {raffle.winners && raffle.winners.length > 0 && (
+                        <div className="mb-8 p-4 border-4 border-black rounded-2xl bg-yellow-50 shadow-[4px_4px_0px_0px_#000]">
+                            <p className="font-black text-center text-sm uppercase mb-3">¡Ya tenemos algunos ganadores!</p>
+                            <div className="flex flex-wrap gap-2 justify-center">
+                                {[...raffle.winners].sort((a: any, b: any) => (a.position || 0) - (b.position || 0)).map((w: any) => (
+                                    <div key={w.position} className="bg-white border-2 border-black px-3 py-1 rounded-xl text-xs font-bold shadow-[2px_2px_0px_0px_#000]">
+                                        {w.position}°: {maskName(w.userName)} (#{w.ticketNumber})
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {step === 1 && (
                         <div className="space-y-8">
                             <h2 className="text-3xl font-comic text-black border-b-4 border-black pb-4">COMPRA TUS TICKETS</h2>

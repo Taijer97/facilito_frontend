@@ -488,7 +488,9 @@ export default function AdminDashboard() {
               drawnAt: new Date().getTime()
           };
 
-          const updatedWinners = [...(activeRaffleForDraw.winners || []), winnerData];
+          // Filter out any existing winner for THIS position to allow redrawing/correction
+          const otherPositionWinners = (activeRaffleForDraw.winners || []).filter((w: any) => w.position !== drawingPosition);
+          const updatedWinners = [...otherPositionWinners, winnerData];
 
           // Update raffle with the new winner list
           const updateObj: any = {
@@ -496,7 +498,7 @@ export default function AdminDashboard() {
               updatedAt: serverTimestamp()
           };
 
-          // If we are drawing the 1st prize (primary winner), end the raffle
+          // If we are drawing the 1st prize (primary winner), we can optionally end the raffle
           if (drawingPosition === 1) {
               updateObj.status = 'ended';
               updateObj.winnerTicketId = winnerSelected.id;
@@ -506,9 +508,11 @@ export default function AdminDashboard() {
               await updateDoc(doc(db, 'raffles', activeRaffleForDraw.id), updateObj);
               
               // Mark ALL tickets except other winners as lost, current as won
+              // This is a big operation, we should be careful. 
+              // But for smaller raffles it works.
               for (const t of drawTickets) {
                   const isCurrentWinner = t.id === winnerSelected.id;
-                  const wasPreviousWinner = activeRaffleForDraw.winners?.some((w: any) => w.ticketId === t.id);
+                  const wasPreviousWinner = updatedWinners.some((w: any) => w.ticketId === t.id && w.position !== 1);
                   
                   if (isCurrentWinner || wasPreviousWinner) {
                       await updateDoc(doc(db, 'tickets', t.id), { status: 'won', updatedAt: serverTimestamp() });
@@ -528,6 +532,7 @@ export default function AdminDashboard() {
 
               // Remove the winner from the local pool for NEXT draw in this session
               setAvailableTicketsPool(prev => prev.filter(t => t.id !== winnerSelected.id));
+              setDrawTickets(prev => prev.filter(t => t.id !== winnerSelected.id));
           }
           
           // Reset for next position or close
@@ -909,6 +914,7 @@ export default function AdminDashboard() {
                               <th className="p-4 border-r-4 border-black">Estado</th>
                               <th className="p-4 border-r-4 border-black">Progreso</th>
                               <th className="p-4 border-r-4 border-black">Recaudado</th>
+                              <th className="p-4 border-r-4 border-black">Ganadores</th>
                               <th className="p-4">Acción</th>
                           </tr>
                       </thead>
@@ -938,10 +944,37 @@ export default function AdminDashboard() {
                                               </div>
                                           </div>
                                       </td>
-                                      <td className="p-4 border-r-4 border-black">S/ {((r.soldTickets || 0) * r.ticketPrice).toFixed(2)}</td>
+          <td className="p-4 border-r-4 border-black">S/ {((r.soldTickets || 0) * r.ticketPrice).toFixed(2)}</td>
+                                      <td className="p-4 border-r-4 border-black font-bold">
+                                          <div className="flex flex-col gap-1">
+                                              {r.winners && r.winners.length > 0 ? (
+                                                  r.winners.sort((a:any, b:any) => a.position - b.position).map((w: any) => (
+                                                      <div key={w.position} className="text-xs bg-gray-100 p-1 rounded border border-black shadow-[1px_1px_0px_#000]">
+                                                          <span className="font-black">{w.position}°:</span> {w.ticketNumber} - {w.userName}
+                                                          <div className="text-[10px] text-red-500 truncate mt-0.5">{w.prize}</div>
+                                                      </div>
+                                                  ))
+                                              ) : (
+                                                  <span className="text-gray-400 font-normal italic">Sin ganadores</span>
+                                              )}
+                                          </div>
+                                      </td>
                                   <td className="p-4">
                                       {r.status === 'active' && (dbUser?.role === 'admin' || dbUser?.role === 'support') && (
                                           <button onClick={() => handleOpenDrawModal(r)} className="bg-yellow-400 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-yellow-500 transition-all font-bold">Sortear</button>
+                                      )}
+                                      {r.status === 'ended' && dbUser?.role === 'admin' && (
+                                          <button 
+                                              onClick={async () => {
+                                                  if(confirm('¿Reactivar sorteo para corregir ganadores?')) {
+                                                      await updateDoc(doc(db, 'raffles', r.id), { status: 'active' });
+                                                      loadAdminData();
+                                                  }
+                                              }}
+                                              className="bg-gray-200 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all font-bold text-xs"
+                                          >
+                                              Reactivar
+                                          </button>
                                       )}
                                   </td>
                               </tr>

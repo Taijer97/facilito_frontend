@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "lastName": { "type": "string" },
+        "dni": { "type": "string" },
+        "address": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "whatsapp": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["email", "name", "role", "createdAt"]
+    },
+    "Raffle": {
+      "title": "Raffle",
+      "description": "A raffle event",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "prize": { "type": "string" },
+        "ticketPrice": { "type": "number" },
+        "totalTickets": { "type": "number" },
+        "soldTickets": { "type": "number" },
+        "status": { "type": "string", "enum": ["active", "drawn", "cancelled"] },
+        "endDate": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" },
+        "imageUrl": { "type": "string" },
+        "winnerTicketId": { "type": "string" },
+        "winnerUserId": { "type": "string" },
+        "winningTicketNumber": { "type": "string" }
+      },
+      "required": ["title", "prize", "ticketPrice", "totalTickets", "soldTickets", "status", "endDate", "createdAt"]
+    },
+    "Ticket": {
+      "title": "Ticket",
+      "description": "A ticket purchased by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "raffleId": { "type": "string" },
+        "ticketNumber": { "type": "string" },
+        "price": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending_payment", "paid", "won", "lost", "rejected"] },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhone": { "type": "string" }
+      },
+      "required": ["userId", "raffleId", "ticketNumber", "status", "createdAt", "price"]
+    },
+    "AppSettings": {
+      "title": "App Settings",
+      "description": "Global application settings",
+      "type": "object",
+      "properties": {
+        "yapeNumber": { "type": "string" },
+        "yapeQrUrl": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "/settings/config": {
+      "schema": { "$ref": "#/entities/AppSettings" },
+      "description": "Global configuration document"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/raffles/{raffleId}": {
+      "schema": { "$ref": "#/entities/Raffle" },
+      "description": "Raffle events"
+    },
+    "/raffles/{raffleId}/tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/Ticket" },
+      "description": "Tickets for a specific raffle"
+    }
+  }
+}

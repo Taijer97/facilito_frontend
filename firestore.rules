@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    
+    // We'll hardcode an admin email for bootstrapping
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email == 'dj.taijer@gmail.com';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (isSuperAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    match /users/{userId} {
+       function isValidUser(data) {
+         return data.keys().hasAll(['email', 'name', 'role', 'createdAt'])
+             && data.keys().size() <= 12
+             && data.email is string
+             && data.name is string
+             && data.role is string && data.role in ['user', 'admin']
+             && data.createdAt == request.time;
+       }
+
+       allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+       allow list: if isSignedIn() && isAdmin();
+       
+       allow create: if isSignedIn() && request.auth.uid == userId 
+                     && isValidUser(incoming()) 
+                     && (incoming().role == 'user' || (incoming().role == 'admin' && isSuperAdmin()));
+                     
+       allow update: if (isSignedIn() && request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lastName', 'dni', 'address', 'whatsapp', 'updatedAt', 'image']) && incoming().role == existing().role)
+                     || isAdmin();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /raffles/{raffleId} {
+        allow read: if true; 
+        allow write: if isAdmin();
+    }
+    
+    match /tickets/{ticketId} {
+       allow get: if isSignedIn() && (request.auth.uid == existing().userId || isAdmin());
+       allow list: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+       
+       allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().status == 'pending_payment';
+       allow update, delete: if isAdmin();
+    }
+  }
+}

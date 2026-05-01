@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, orderBy, onSnapshot, where, deleteDoc } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, orderBy, onSnapshot, where, deleteDoc, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../components/AuthProvider';
 import { Search, MessageCircle, Clock, Zap, XCircle, Ticket, CheckCircle, RotateCcw, Eye, ShieldAlert } from 'lucide-react';
@@ -223,21 +223,31 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
       try {
           const rSnap = await getDocs(query(collection(db, 'raffles'), orderBy('createdAt', 'desc')));
-          setRaffles(rSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+          const rafflesData = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
           
-          // Get pending tickets across all collections
           const tSnap = await getDocs(query(collection(db, 'tickets')));
-          const tickets = tSnap.docs.map(d => {
+          const allTickets = tSnap.docs.map(d => {
               const data = d.data();
               return {
                   id: d.id,
                   ...data,
-                  // Convert timestamp to milliseconds for comparison
                   createdAt: data.createdAt?.toMillis ? data.createdAt.toMillis() : (data.createdAt || Date.now())
               };
-          }).filter((t: any) => t.status === 'pending_payment');
-          
-          setPendingTickets(tickets);
+          });
+
+          const rafflesWithRealData = rafflesData.map(r => {
+            const paidTickets = allTickets.filter(t => t.raffleId === r.id && t.status === 'paid');
+            // Ground truth revenue: sum price of all paid non-bonus tickets
+            const revenue = paidTickets.reduce((acc, t) => acc + (t.isBonus ? 0 : (t.price || r.ticketPrice || 0)), 0);
+            return { 
+              ...r, 
+              calculatedRevenue: revenue,
+              soldTickets: paidTickets.length // Use actual paid count for progress
+            };
+          });
+
+          setRaffles(rafflesWithRealData);
+          setPendingTickets(allTickets.filter((t: any) => t.status === 'pending_payment'));
       } catch (error) {
           console.error(error);
       }
@@ -263,6 +273,8 @@ export default function AdminDashboard() {
               imageUrl2: showExtraPrizes ? imageUrl2 : '',
               imageUrl3: showExtraPrizes ? imageUrl3 : '',
               bonusThreshold: Number(bonusThreshold) || 0,
+              soldTickets: 0,
+              revenue: 0,
               winnerTicketId: '',
               winnerUserId: '',
               winningTicketNumber: '',
@@ -296,15 +308,21 @@ export default function AdminDashboard() {
               updatedAt: serverTimestamp()
           });
           
-          // Increment soldTickets on Raffle
+          // Increment soldTickets and revenue on Raffle
           const raffle = raffles.find(r => r.id === ticket.raffleId);
           if (raffle) {
-              await updateDoc(doc(db, 'raffles', raffle.id), {
-                 soldTickets: (raffle.soldTickets || 0) + 1,
+              const updates: any = {
+                 soldTickets: increment(1),
                  updatedAt: serverTimestamp()
-              });
+              };
+              // Only add price to revenue if it's not a bonus ticket
+              if (!ticket.isBonus) {
+                  updates.revenue = increment(ticket.price || raffle.ticketPrice || 0);
+              }
+              await updateDoc(doc(db, 'raffles', raffle.id), updates);
           }
-          // Do not call loadAdminData here as we have real-time listeners
+          // Refresh data to show updated totals
+          loadAdminData();
       } catch (e) {
           console.error(e);
       }
@@ -439,6 +457,38 @@ export default function AdminDashboard() {
   const [availableTicketsPool, setAvailableTicketsPool] = useState<any[]>([]);
   const [currentDisplayTicket, setCurrentDisplayTicket] = useState<any>(null);
   const [drawingPosition, setDrawingPosition] = useState<1 | 2 | 3>(1);
+  const [participantsModalOpen, setParticipantsModalOpen] = useState(false);
+  const [selectedRaffleForParticipants, setSelectedRaffleForParticipants] = useState<any>(null);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
+
+  const handleOpenParticipantsModal = async (raffle: any) => {
+    setSelectedRaffleForParticipants(raffle);
+    setParticipantsModalOpen(true);
+    setIsLoadingParticipants(true);
+    try {
+      const q = query(collection(db, 'tickets'), where('raffleId', '==', raffle.id), where('status', '==', 'paid'));
+      const snap = await getDocs(q);
+      const tickets = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      const groups: Record<string, any> = {};
+      tickets.forEach((t: any) => {
+        if (!groups[t.userId]) {
+          groups[t.userId] = {
+            userName: t.userName,
+            userPhone: t.userPhone,
+            tickets: []
+          };
+        }
+        groups[t.userId].tickets.push(t.ticketNumber);
+      });
+      setParticipants(Object.values(groups));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingParticipants(false);
+    }
+  };
 
   const handleOpenDrawModal = async (raffle: any) => {
       setActiveRaffleForDraw(raffle);
@@ -1009,7 +1059,7 @@ export default function AdminDashboard() {
                                               </div>
                                           </div>
                                       </td>
-          <td className="p-4 border-r-4 border-black">S/ {((r.soldTickets || 0) * r.ticketPrice).toFixed(2)}</td>
+                                      <td className="p-4 border-r-4 border-black">S/ {(r.calculatedRevenue || 0).toFixed(2)}</td>
                                       <td className="p-4 border-r-4 border-black font-bold">
                                           <div className="flex flex-col gap-1">
                                               {r.winners && r.winners.length > 0 ? (
@@ -1038,23 +1088,31 @@ export default function AdminDashboard() {
                                               )}
                                           </div>
                                       </td>
-                                  <td className="p-4">
-                                      {r.status === 'active' && (dbUser?.role === 'admin' || dbUser?.role === 'support') && (
-                                          <button onClick={() => handleOpenDrawModal(r)} className="bg-yellow-400 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-yellow-500 transition-all font-bold">Sortear</button>
-                                      )}
-                                      {r.status === 'ended' && dbUser?.role === 'admin' && (
-                                          <button 
-                                              onClick={async () => {
-                                                  if(confirm('¿Reactivar sorteo para corregir ganadores?')) {
-                                                      await updateDoc(doc(db, 'raffles', r.id), { status: 'active' });
-                                                      loadAdminData();
-                                                  }
-                                              }}
-                                              className="bg-gray-200 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all font-bold text-xs"
-                                          >
-                                              Reactivar
+                                      <td className="p-4">
+                                          <div className="flex flex-wrap gap-2">
+                                              {r.status === 'active' && (dbUser?.role === 'admin' || dbUser?.role === 'support') && (
+                                                  <button onClick={() => handleOpenDrawModal(r)} className="bg-yellow-400 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-yellow-500 transition-all font-bold text-xs">Sortear</button>
+                                              )}
+                                              <button 
+                                                  onClick={() => handleOpenParticipantsModal(r)}
+                                                  className="bg-cyan-400 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-cyan-500 transition-all font-bold text-xs flex items-center gap-1"
+                                              >
+                                                  <Eye className="w-3 h-3" /> Partic.
                                           </button>
-                                      )}
+                                          {r.status === 'ended' && dbUser?.role === 'admin' && (
+                                              <button 
+                                                  onClick={async () => {
+                                                      if(confirm('¿Reactivar sorteo para corregir ganadores?')) {
+                                                          await updateDoc(doc(db, 'raffles', r.id), { status: 'active' });
+                                                          loadAdminData();
+                                                      }
+                                                  }}
+                                                  className="bg-gray-200 border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all font-bold text-xs"
+                                              >
+                                                  Reactivar
+                                              </button>
+                                          )}
+                                      </div>
                                   </td>
                               </tr>
                           );
@@ -1537,6 +1595,73 @@ export default function AdminDashboard() {
                     </div>
                 </motion.div>
             </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL DE PARTICIPANTES */}
+      <AnimatePresence>
+        {participantsModalOpen && selectedRaffleForParticipants && (
+          <div className="fixed inset-0 z-[120] overflow-y-auto bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white border-4 sm:border-8 border-black rounded-3xl p-4 sm:p-8 max-w-3xl w-full relative shadow-[12px_12px_0px_0px_#000] max-h-[90vh] flex flex-col"
+            >
+              <button 
+                onClick={() => setParticipantsModalOpen(false)}
+                className="absolute -top-3 -right-3 bg-red-500 text-white w-10 h-10 rounded-full border-4 border-black font-bold flex items-center justify-center hover:scale-110 transition-transform shadow-[4px_4px_0px_0px_#000]"
+              >
+                X
+              </button>
+
+              <div className="mb-6">
+                <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none mb-2">Participantes</h2>
+                <p className="font-bold text-cyan-600 bg-cyan-50 border-2 border-black px-3 py-1 rounded-xl inline-block">{selectedRaffleForParticipants.title}</p>
+              </div>
+
+              {isLoadingParticipants ? (
+                <div className="flex-grow flex items-center justify-center py-20">
+                  <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                  {participants.length === 0 ? (
+                    <div className="text-center py-20 text-gray-400 font-bold italic">No hay participantes confirmados aún.</div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      {participants.map((p, idx) => (
+                        <div key={idx} className="bg-gray-50 border-2 border-black p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[4px_4px_0px_0px_#000]">
+                          <div>
+                            <p className="font-black text-lg text-black uppercase">{p.userName}</p>
+                            <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                              <MessageCircle className="w-3 h-3" /> {p.userPhone}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 max-w-sm justify-end">
+                            {p.tickets.map((num: string) => (
+                              <span key={num} className="bg-white border border-black px-2 py-0.5 rounded text-[10px] font-black shadow-[1px_1px_0px_0px_#000]">#{num}</span>
+                            ))}
+                            <span className="bg-black text-white px-2 py-0.5 rounded text-[10px] font-black">{p.tickets.length} TX</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-6 pt-4 border-t-4 border-black flex justify-between items-center">
+                  <p className="font-black text-lg uppercase">Total: {participants.length} Usuarios</p>
+                  <button 
+                    onClick={() => setParticipantsModalOpen(false)}
+                    className="bg-black text-white px-6 py-2 rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
+                  >
+                    Cerrar
+                  </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

@@ -270,8 +270,11 @@ export default function UserDashboard() {
                                             ticket.status === 'rejected' ? 'bg-red-400' : 'bg-green-400'
                                         }`}>
                                             <span className="font-comic text-xl text-black uppercase">NUM. {ticket.ticketNumber}</span>
+                                            {ticket.paymentMethod === 'yape_auto' && (
+                                                <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1 border border-green-300 rounded">AUTO</span>
+                                            )}
                                             {ticket.price === 0 && (
-                                                <span className="text-[10px] font-bold bg-white px-1 border border-black rounded">GRATIS</span>
+                                                <span className="text-[10px] font-bold bg-white px-1 border border-black rounded ml-1">GRATIS</span>
                                             )}
                                         </div>
                                         <div className="p-5 flex-grow flex flex-col relative bg-white">

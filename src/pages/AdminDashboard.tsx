@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string, yapeName: string}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: '', yapeName: ''});
+  const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string, yapeName: string, autoPaymentEnabled: boolean}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: '', yapeName: '', autoPaymentEnabled: false});
   const [activeTab, setActiveTab] = useState<'tickets' | 'raffles_create' | 'raffles_list' | 'users' | 'settings'>('tickets');
   const [isUploading, setIsUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -165,7 +165,8 @@ export default function AdminDashboard() {
       yapeNumber: appSettings.yapeNumber.trim(),
       yapeQrUrl: appSettings.yapeQrUrl.trim(),
       whatsappNumber: appSettings.whatsappNumber.trim(),
-      yapeName: (appSettings.yapeName || '').trim()
+      yapeName: (appSettings.yapeName || '').trim(),
+      autoPaymentEnabled: !!appSettings.autoPaymentEnabled
     };
     setAppSettings(settingsToSave);
     await saveSettings(settingsToSave);
@@ -1397,6 +1398,19 @@ export default function AdminDashboard() {
                         className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
                       />
                       <p className="text-xs font-bold mt-1 text-gray-500">Incluir código de país (ej: 51 para Perú)</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 p-4 border-4 border-black rounded-xl bg-gray-50">
+                      <input 
+                          type="checkbox"
+                          id="autoPaymentEnabled"
+                          checked={!!appSettings.autoPaymentEnabled}
+                          onChange={e => setAppSettings({...appSettings, autoPaymentEnabled: e.target.checked})}
+                          className="w-6 h-6 border-4 border-black"
+                      />
+                      <label htmlFor="autoPaymentEnabled" className="font-bold cursor-pointer select-none">
+                          Activar Verificación de Pago Automático (Yape)
+                      </label>
                   </div>
                   
                   {appSettings.yapeQrUrl && (

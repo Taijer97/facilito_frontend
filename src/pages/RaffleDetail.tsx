@@ -33,6 +33,7 @@ export default function RaffleDetail() {
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
   const [verifying, setVerifying] = useState(false);
   const [autoApproved, setAutoApproved] = useState(false);
+  const [wasAutoPaid, setWasAutoPaid] = useState(false);
   const [autoStatus, setAutoStatus] = useState<{ type: 'idle' | 'verifying' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
 
   const handleLogin = async () => {
@@ -133,6 +134,7 @@ export default function RaffleDetail() {
 
         if (data.matched) {
             setAutoStatus({ type: 'success', message: '✅ ¡PAGO VERIFICADO! Procesando tus tickets...' });
+            setWasAutoPaid(true);
             setTimeout(() => {
                 setAutoApproved(true);
                 setIsAutoActive(false);
@@ -476,6 +478,7 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                                 </button>
                             </div>
 
+                            {settings?.autoPaymentEnabled && (
                             <div className="mb-6">
                                 <button 
                                     onClick={() => {
@@ -493,6 +496,7 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                                     <span className="text-xs font-bold uppercase leading-none">Verificación instantánea</span>
                                 </button>
                             </div>
+                            )}
 
                             {isAutoActive ? (
                                 <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[6px_6px_0px_0px_#000] space-y-6">
@@ -504,18 +508,21 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                                         <span className="font-comic text-2xl text-red-600">{formatTime(timeLeft)}</span>
                                     </div>
 
-                                    {autoStatus.type !== 'idle' && (
-                                        <motion.div 
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className={`p-4 border-4 border-black rounded-xl font-bold text-sm text-center mb-4 shadow-[4px_4px_0px_0px_#000] ${
-                                                autoStatus.type === 'verifying' ? 'bg-cyan-100 animate-pulse' : 
-                                                autoStatus.type === 'success' ? 'bg-green-100' : 'bg-red-50'
-                                            }`}
-                                        >
-                                            {autoStatus.message}
-                                        </motion.div>
-                                    )}
+                                    <AnimatePresence>
+                                        {autoStatus.type !== 'idle' && (
+                                            <motion.div 
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                className={`p-6 border-4 border-black rounded-2xl font-black text-lg text-center mb-6 shadow-[6px_6px_0px_0px_#000] ${
+                                                    autoStatus.type === 'verifying' ? 'bg-cyan-200 animate-pulse' : 
+                                                    autoStatus.type === 'success' ? 'bg-green-400 text-black' : 'bg-red-500 text-white shadow-[6px_6px_0px_0px_#000]'
+                                                }`}
+                                            >
+                                                {autoStatus.message}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
 
                                     <div className="space-y-4 text-left">
                                         <p className="font-bold text-lg border-b-2 border-black pb-1">INSTRUCCIONES:</p>
@@ -705,9 +712,13 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                                         <div className="w-24 h-24 bg-green-400 border-4 border-black rounded-full flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_#000]">
                                             <svg className="w-12 h-12 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
                                         </div>
-                                        <h2 className="text-4xl font-comic text-black mb-4">¡TICKETS RESERVADOS!</h2>
+                                        <h2 className="text-4xl font-comic text-black mb-4">{wasAutoPaid ? '¡PAGO CONFIRMADO!' : '¡TICKETS RESERVADOS!'}</h2>
                                         
-                                        {immediatePaidUI ? (
+                                        {wasAutoPaid ? (
+                                            <p className="text-xl font-bold bg-green-100 p-4 border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] text-left">
+                                                ✅ Tu pago ha sido verificado automáticamente. Tus tickets ya están <span className="inline-block bg-green-200 px-2 py-1 rounded border-2 border-black">confirmados</span> y estás participando oficialmente en el sorteo.
+                                            </p>
+                                        ) : immediatePaidUI ? (
                                             <p className="text-xl font-bold bg-green-100 p-4 border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] text-left">
                                                 ¡Tus tickets han sido reservados usando tu saldo de referidos! Aparecerán como confirmados en tu panel una vez validados por el administrador.
                                             </p>

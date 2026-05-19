@@ -32,7 +32,7 @@ service cloud.firestore {
     match /users/{userId} {
        function isValidUser(data) {
          return data.keys().hasAll(['email', 'name', 'role', 'createdAt'])
-             && data.keys().size() <= 12
+             && data.keys().size() <= 16
              && data.email is string
              && data.name is string
              && data.role is string && data.role in ['user', 'support', 'admin']
@@ -52,10 +52,12 @@ service cloud.firestore {
                      && (incoming().role == 'user' || (incoming().role == 'admin' && isSuperAdmin()));
                      
        allow update: if (isSignedIn() && request.auth.uid == userId && (
-                        // Role can only be changed by superadmin (for bootstrapping) or admin
-                        (incoming().role == existing().role && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lastName', 'dni', 'address', 'whatsapp', 'updatedAt', 'image'])) ||
+                        (incoming().role == existing().role && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'lastName', 'dni', 'address', 'whatsapp', 'updatedAt', 'image', 'referralRewardClaimed', 'referralBalance']) && 
+                        ( !('referralBalance' in incoming().diff(existing()).affectedKeys()) || incoming().referralBalance <= existing().referralBalance )
+                        ) ||
                         isSuperAdmin()
                       ))
+                     || (isSignedIn() && incoming().diff(existing()).affectedKeys().hasOnly(['referralBalance', 'referralCount']) && incoming().referralBalance == existing().referralBalance + 1 && incoming().referralCount == existing().referralCount + 1)
                      || isAdmin();
        allow delete: if isAdmin();
     }

@@ -1,6 +1,8 @@
 {
-  "name": "Sorteos Pro",
+  "name": "Premios Facilito",
   "description": "Plataforma de sorteos semanales con compra de tickets, panel de usuario y resultados.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

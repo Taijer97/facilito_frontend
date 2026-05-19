@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+respaldo_firebase_desrollo/
+respaldo_firebase_produccionario/
+firebase-applet-config.json
+firebase-blueprint.json

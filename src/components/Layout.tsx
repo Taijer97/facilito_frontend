@@ -144,12 +144,9 @@ export default function Layout() {
       <ProfileCompletionModal />
       <header className="bg-yellow-400 shadow-sm border-b-4 border-black sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <Link to="/" className="flex items-center space-x-2 group">
-              <div className="bg-white p-2 rounded-full border-4 border-black shadow-[4px_4px_0px_0px_#000] group-hover:translate-y-1 group-hover:translate-x-1 group-hover:shadow-[0px_0px_0px_0px_#000] transition-all">
-                <img src="/logo.png" alt="Facilito" className="w-8 h-8 object-contain" />
-              </div>
-              <span className="font-comic text-3xl tracking-wide text-red-500 drop-shadow-[2px_2px_0px_#000]">FACILITO</span>
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            <Link to="/" className="flex items-center group">
+              <img src="/logo.png" alt="Premios Facilito" className="w-64 h-32 sm:w-56 sm:h-28 object-contain hover:scale-105 transition-transform" />
             </Link>
 
             <nav className="hidden md:flex space-x-8">
@@ -276,11 +273,8 @@ export default function Layout() {
       <footer className="bg-cyan-400 text-black border-t-8 border-black mt-auto py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="bg-white p-2 rounded-full border-4 border-black">
-                <img src="/logo.png" alt="Facilito" className="w-6 h-6 object-contain" />
-              </div>
-              <span className="font-comic text-2xl tracking-wide text-black">FACILITO</span>
+            <div className="flex items-center">
+              <img src="/logo.png" alt="Premios Facilito" className="w-40 h-20 object-contain" />
             </div>
             <p className="text-black font-bold text-sm">La plataforma de sorteos más transparente del Perú. ¡Participa desde S/1 y gana!</p>
           </div>
@@ -296,7 +290,7 @@ export default function Layout() {
             <h3 className="font-comic text-xl mb-4 text-black underline decoration-4 decoration-yellow-400">SOPORTE</h3>
             <ul className="space-y-2 text-sm font-bold text-black">
               <li><a href="https://wa.me/51999999999" target="_blank" rel="noreferrer" className="hover:text-red-500 transition-colors">WhatsApp: +51 925 763 903</a></li>
-              <li><a href="mailto:soporte@sorteospro.com" className="hover:text-red-500 transition-colors">Email</a></li>
+              <li><a href="mailto:soporte@premiosfacilito.com" className="hover:text-red-500 transition-colors">Email</a></li>
               <li><Link to="/terminos" className="hover:text-red-500 transition-colors">Preguntas Frecuentes</Link></li>
             </ul>
           </div>
@@ -309,7 +303,7 @@ export default function Layout() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 mt-8 pt-8 border-t-4 border-black text-center font-bold text-black">
-          © {new Date().getFullYear()} Facilito. Todos los derechos reservados.
+          © {new Date().getFullYear()} Premios Facilito. Todos los derechos reservados.
         </div>
       </footer>
     </div>

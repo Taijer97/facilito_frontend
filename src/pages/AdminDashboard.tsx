@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, orderBy, onSnapshot, where, deleteDoc, increment } from 'firebase/firestore';
+import { collection, query, getDocs, addDoc, updateDoc, doc, serverTimestamp, orderBy, onSnapshot, where, deleteDoc, increment, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../components/AuthProvider';
-import { Search, MessageCircle, Clock, Zap, XCircle, Ticket, CheckCircle, RotateCcw, Eye, ShieldAlert } from 'lucide-react';
+import { Search, MessageCircle, Clock, Zap, XCircle, Ticket, CheckCircle, RotateCcw, Eye, ShieldAlert, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
 
@@ -48,8 +48,9 @@ export default function AdminDashboard() {
   const [imageUrl3, setImageUrl3] = useState('');
   const [showExtraPrizes, setShowExtraPrizes] = useState(false);
   const [price, setPrice] = useState('5');
-  const [total, setTotal] = useState('100');
+  const [revenueGoal, setRevenueGoal] = useState('500');
   const [bonusThreshold, setBonusThreshold] = useState('10');
+  const [eliminateThrowaways, setEliminateThrowaways] = useState(false);
   const [endDateInput, setEndDateInput] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
@@ -138,7 +139,6 @@ export default function AdminDashboard() {
     } catch (e) {
       // If document doesn't exist, try setting it
       try {
-        const { setDoc } = await import('firebase/firestore');
         await setDoc(doc(db, 'settings', 'config'), {
           ...settings,
           updatedAt: serverTimestamp()
@@ -187,7 +187,15 @@ export default function AdminDashboard() {
       });
 
       if (!response.ok) {
-        throw new Error('Error al subir la imagen');
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al subir la imagen');
+        } else {
+            const text = await response.text();
+            console.error("Server returned non-JSON error:", text.substring(0, 200));
+            throw new Error('Error del servidor (no JSON)');
+        }
       }
 
       const data = await response.json();
@@ -223,10 +231,10 @@ export default function AdminDashboard() {
   const loadAdminData = async () => {
       try {
           const rSnap = await getDocs(query(collection(db, 'raffles'), orderBy('createdAt', 'desc')));
-          const rafflesData = rSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+          const rafflesData = rSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
           
           const tSnap = await getDocs(query(collection(db, 'tickets')));
-          const allTickets = tSnap.docs.map(d => {
+          const allTickets: any[] = tSnap.docs.map(d => {
               const data = d.data();
               return {
                   id: d.id,
@@ -242,7 +250,8 @@ export default function AdminDashboard() {
             return { 
               ...r, 
               calculatedRevenue: revenue,
-              soldTickets: paidTickets.length // Use actual paid count for progress
+              soldTickets: paidTickets.length, // Total count of paid tickets
+              revenueGoal: r.revenueGoal || (r.totalTickets * (r.ticketPrice || 0)) || 500 // Fallback for old raffles
             };
           });
 
@@ -263,7 +272,7 @@ export default function AdminDashboard() {
               prize2: showExtraPrizes ? prize2 : '',
               prize3: showExtraPrizes ? prize3 : '',
               ticketPrice: Number(price),
-              totalTickets: Number(total),
+              revenueGoal: Number(revenueGoal),
               status: 'active',
               endDate,
               createdAt: serverTimestamp(),
@@ -273,6 +282,8 @@ export default function AdminDashboard() {
               imageUrl2: showExtraPrizes ? imageUrl2 : '',
               imageUrl3: showExtraPrizes ? imageUrl3 : '',
               bonusThreshold: Number(bonusThreshold) || 0,
+              eliminateThrowaways,
+              throwaways: [], // To store tickets that "went to the water"
               soldTickets: 0,
               revenue: 0,
               winnerTicketId: '',
@@ -290,8 +301,9 @@ export default function AdminDashboard() {
           setImageUrl3('');
           setDescription('');
           setPrice('5');
-          setTotal('100');
+          setRevenueGoal('500');
           setBonusThreshold('10');
+          setEliminateThrowaways(false);
           loadAdminData();
           alert('Sorteo creado con éxito');
           setActiveTab('raffles_list');
@@ -321,6 +333,34 @@ export default function AdminDashboard() {
               }
               await updateDoc(doc(db, 'raffles', raffle.id), updates);
           }
+
+          // Handle referral reward
+          try {
+              const userRef = doc(db, 'users', ticket.userId);
+              const userSnap = await getDoc(userRef);
+              if (userSnap.exists()) {
+                  const userData = userSnap.data();
+                  if (userData.referredBy && !userData.referralRewardClaimed) {
+                      // Find the referrer by referralCode
+                      const referrerQuery = query(collection(db, 'users'), where('referralCode', '==', userData.referredBy));
+                      const referrerSnap = await getDocs(referrerQuery);
+                      if (!referrerSnap.empty) {
+                          const referrerDoc = referrerSnap.docs[0];
+                          await updateDoc(referrerDoc.ref, {
+                              referralBalance: increment(1), // 1 sol worth of ticket
+                              referralCount: increment(1)
+                          });
+                          // Mark this user as having yielded a reward
+                          await updateDoc(userRef, {
+                              referralRewardClaimed: true
+                          });
+                      }
+                  }
+              }
+          } catch (refErr) {
+              console.error('Error handling referral reward:', refErr);
+          }
+
           // Refresh data to show updated totals
           loadAdminData();
       } catch (e) {
@@ -449,7 +489,7 @@ export default function AdminDashboard() {
   // Drawer State
   const [winnerModalOpen, setWinnerModalOpen] = useState(false);
   const [activeRaffleForDraw, setActiveRaffleForDraw] = useState<any>(null);
-  const [drawState, setDrawState] = useState<'setup' | 'idle' | 'shuffling' | 'eliminated' | 'winner'>('setup');
+  const [drawState, setDrawState] = useState<'preview' | 'setup' | 'idle' | 'shuffling' | 'eliminated' | 'winner'>('setup');
   const [attemptTarget, setAttemptTarget] = useState(1);
   const [currentAttempt, setCurrentAttempt] = useState(1);
   const [autoMode, setAutoMode] = useState(false);
@@ -457,10 +497,20 @@ export default function AdminDashboard() {
   const [availableTicketsPool, setAvailableTicketsPool] = useState<any[]>([]);
   const [currentDisplayTicket, setCurrentDisplayTicket] = useState<any>(null);
   const [drawingPosition, setDrawingPosition] = useState<1 | 2 | 3>(1);
+
+  const protectedName = (name: string) => {
+    if (!name) return 'Participante';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0];
+    return parts.map((p, i) => i === 0 ? p : p[0].toUpperCase() + '.').join(' ');
+  };
   const [participantsModalOpen, setParticipantsModalOpen] = useState(false);
   const [selectedRaffleForParticipants, setSelectedRaffleForParticipants] = useState<any>(null);
   const [participants, setParticipants] = useState<any[]>([]);
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
+
+  const [postponeModalOpen, setPostponeModalOpen] = useState(false);
+  const [selectedRaffleToPostpone, setSelectedRaffleToPostpone] = useState<any>(null);
 
   const handleOpenParticipantsModal = async (raffle: any) => {
     setSelectedRaffleForParticipants(raffle);
@@ -497,18 +547,37 @@ export default function AdminDashboard() {
       setCurrentAttempt(1);
       setAutoMode(false);
       setCurrentDisplayTicket(null);
-      // Logic: Start from 3rd if exists, else 2nd, else 1st
-      const startPos = raffle.prize3 ? 3 : (raffle.prize2 ? 2 : 1);
-      setDrawingPosition(startPos as 1 | 2 | 3);
+      // Logic: Start from highest prize that hasn't been drawn yet (3rd -> 2nd -> 1st)
+      const winnersPositions = raffle.winners?.map((w: any) => w.position) || [];
+      let startPos: 1 | 2 | 3 = 1;
+      if (raffle.prize3 && !winnersPositions.includes(3)) {
+          startPos = 3;
+      } else if (raffle.prize2 && !winnersPositions.includes(2)) {
+          startPos = 2;
+      } else if (!winnersPositions.includes(1)) {
+          startPos = 1;
+      } else {
+          // All drawn, default to 1 for redo/safety
+          startPos = 1;
+      }
+      
+      setDrawingPosition(startPos);
       setWinnerModalOpen(true);
+      setDrawState('preview');
       
       try {
           const tSnap = await getDocs(query(collection(db, 'tickets')));
           // Only show tickets that haven't won a previous position in this raffle
           const winnersTicketIds = raffle.winners?.map((w: any) => w.ticketId) || [];
+          const throwaways = raffle.throwaways || [];
           
           const tickets = tSnap.docs.map(d => ({id: d.id, ...d.data() as any}))
-              .filter((t: any) => t.raffleId === raffle.id && t.status === 'paid' && !winnersTicketIds.includes(t.id));
+              .filter((t: any) => 
+                  t.raffleId === raffle.id && 
+                  t.status === 'paid' && 
+                  !winnersTicketIds.includes(t.id) &&
+                  (!raffle.eliminateThrowaways || !throwaways.includes(t.ticketNumber))
+              );
               
           setDrawTickets(tickets);
           setAvailableTicketsPool(tickets);
@@ -549,7 +618,25 @@ export default function AdminDashboard() {
           await saveWinner(selectedTicket);
       } else {
           setDrawState('eliminated');
-          setAvailableTicketsPool(ticketsPool.filter((_, i) => i !== selectedIndex));
+          const remainingPool = ticketsPool.filter((_, i) => i !== selectedIndex);
+          setAvailableTicketsPool(remainingPool);
+          
+          // If eliminateThrowaways is true, save this number to throwaways in Firestore
+          if (activeRaffleForDraw?.eliminateThrowaways) {
+              try {
+                  const throwaways = activeRaffleForDraw.throwaways || [];
+                  if (!throwaways.includes(selectedTicket.ticketNumber)) {
+                      const updatedThrowaways = [...throwaways, selectedTicket.ticketNumber];
+                      await updateDoc(doc(db, 'raffles', activeRaffleForDraw.id), {
+                          throwaways: updatedThrowaways,
+                          updatedAt: serverTimestamp()
+                      });
+                      setActiveRaffleForDraw({...activeRaffleForDraw, throwaways: updatedThrowaways});
+                  }
+              } catch (e) {
+                  console.error('Error saving throwaway:', e);
+              }
+          }
       }
   };
 
@@ -618,15 +705,10 @@ export default function AdminDashboard() {
           
           // Reset for next position or close
           if (drawingPosition === 1) {
-            setWinnerModalOpen(false);
+            // Delay closing slightly so admin can see the result?
+            // Actually user wants a button, but for 1st place we can just keep the "FINALIZAR" button.
           } else {
-            // Suggest next position (descending sequence if possible)
-            setDrawState('setup');
-            setCurrentAttempt(1);
-            // If we just did 3rd, do 2nd. If 2nd, do 1st.
-            setDrawingPosition(drawingPosition === 3 ? 2 : 1);
-            // Current winner stays in UI for a moment or until next setup?
-            // Actually setup resets currentDisplayTicket potentially? Let's check below.
+            // KEEP drawState as 'winner' so the results stay on screen
           }
           
           loadAdminData();
@@ -837,10 +919,14 @@ export default function AdminDashboard() {
                       <input 
                         type="text" 
                         value={title} 
-                        onChange={e=>setTitle(e.target.value)} 
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                            setTitle(capitalized);
+                        }} 
                         required 
                         placeholder="Ej: Sorteo de una Laptop"
-                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold" 
+                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize" 
                       />
                   </div>
 
@@ -861,9 +947,13 @@ export default function AdminDashboard() {
                           <input 
                             type="text" 
                             value={prize} 
-                            onChange={e=>setPrize(e.target.value)} 
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                                setPrize(capitalized);
+                            }} 
                             required 
-                            className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                            className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold capitalize" 
                           />
                       </div>
                       <div className="space-y-1">
@@ -895,9 +985,13 @@ export default function AdminDashboard() {
                                 <input 
                                   type="text" 
                                   value={prize2} 
-                                  onChange={e=>setPrize2(e.target.value)} 
+                                  onChange={(e) => {
+                                      const val = e.target.value;
+                                      const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                                      setPrize2(capitalized);
+                                  }} 
                                   placeholder="Segundo premio (Opcional)"
-                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold capitalize" 
                                 />
                             </div>
                             <div className="space-y-1">
@@ -922,9 +1016,13 @@ export default function AdminDashboard() {
                                 <input 
                                   type="text" 
                                   value={prize3} 
-                                  onChange={e=>setPrize3(e.target.value)} 
+                                  onChange={(e) => {
+                                      const val = e.target.value;
+                                      const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                                      setPrize3(capitalized);
+                                  }} 
                                   placeholder="Tercer premio (Opcional)"
-                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold capitalize" 
                                 />
                             </div>
                             <div className="space-y-1">
@@ -949,11 +1047,11 @@ export default function AdminDashboard() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-1">
-                          <label className="block text-sm font-black ml-2 uppercase">Total de Tickets</label>
+                          <label className="block text-sm font-black ml-2 uppercase">Meta de Recaudación (S/)</label>
                           <input 
                             type="number" 
-                            value={total} 
-                            onChange={e=>setTotal(e.target.value)} 
+                            value={revenueGoal} 
+                            onChange={e=>setRevenueGoal(e.target.value)} 
                             required 
                             className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
                           />
@@ -990,6 +1088,19 @@ export default function AdminDashboard() {
                           </div>
                           <p className="text-[10px] font-bold ml-2 text-gray-500">Cada {bonusThreshold || 'X'} tickets comprados se regalará 1 automáticamente.</p>
                       </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-yellow-100 p-4 border-4 border-black rounded-3xl shadow-[4px_4px_0px_0px_#000]">
+                      <input 
+                        type="checkbox" 
+                        id="eliminateThrowaways"
+                        checked={eliminateThrowaways} 
+                        onChange={e => setEliminateThrowaways(e.target.checked)}
+                        className="w-8 h-8 border-4 border-black rounded-xl cursor-pointer"
+                      />
+                      <label htmlFor="eliminateThrowaways" className="font-comic text-lg text-black cursor-pointer select-none">
+                        Eliminar tickets "al agua" (no vuelven a participar en este sorteo)
+                      </label>
                   </div>
 
                   <div className="space-y-1">
@@ -1035,7 +1146,7 @@ export default function AdminDashboard() {
                       </thead>
                       <tbody>
                           {raffles.map((r, index) => {
-                              const percentage = Math.floor(((r.soldTickets || 0) / (r.totalTickets || 1)) * 100);
+                              const percentage = Math.floor(((r.calculatedRevenue || 0) / (r.revenueGoal || 1)) * 100);
                               return (
                                   <tr key={r.id} className={`border-b-4 border-black font-bold ${index % 2 === 0 ? 'bg-white' : 'bg-yellow-50'}`}>
                                       <td className="p-4 border-r-4 border-black">{r.title}</td>
@@ -1049,7 +1160,7 @@ export default function AdminDashboard() {
                                       <td className="p-4 border-r-4 border-black">
                                           <div className="flex flex-col gap-1 min-w-[120px]">
                                               <div className="flex justify-between text-xs">
-                                                  <span>{percentage}% vendido</span>
+                                                  <span>{percentage}% recaudado</span>
                                               </div>
                                               <div className="w-full bg-white border-2 border-black h-4 rounded-full overflow-hidden shadow-[2px_2px_0px_0px_#000]">
                                                   <div 
@@ -1099,6 +1210,17 @@ export default function AdminDashboard() {
                                               >
                                                   <Eye className="w-3 h-3" /> Partic.
                                           </button>
+                                          {r.status === 'active' && (
+                                              <button 
+                                                  onClick={() => {
+                                                      setSelectedRaffleToPostpone(r);
+                                                      setPostponeModalOpen(true);
+                                                  }}
+                                                  className="bg-purple-400 text-white border-2 border-black px-3 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-y-0.5 hover:shadow-none hover:bg-purple-500 transition-all font-bold text-xs flex items-center gap-1"
+                                              >
+                                                  <Calendar className="w-3 h-3" /> Aplazar
+                                              </button>
+                                          )}
                                           {r.status === 'ended' && dbUser?.role === 'admin' && (
                                               <button 
                                                   onClick={async () => {
@@ -1217,10 +1339,14 @@ export default function AdminDashboard() {
                       <input 
                         type="text" 
                         value={appSettings.yapeName || ''} 
-                        onChange={e => setAppSettings({...appSettings, yapeName: e.target.value})} 
+                        onChange={e => {
+                            const val = e.target.value;
+                            const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                            setAppSettings({...appSettings, yapeName: capitalized});
+                        }} 
                         required 
                         placeholder="Ej: Juan Pérez"
-                        className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
+                        className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none capitalize" 
                       />
                   </div>
                   <div>
@@ -1333,8 +1459,48 @@ export default function AdminDashboard() {
                 </div>
                 <h3 className="text-2xl font-bold text-center mb-8 bg-cyan-200 border-4 border-black inline-block px-4 py-2 transform -rotate-2 w-full">{activeRaffleForDraw.title}</h3>
 
-                <div className="bg-gray-100 border-4 border-black rounded-2xl p-6 relative overflow-y-auto max-h-[70vh] shadow-inner mb-8 mt-4">
-                    {drawState === 'setup' || drawState === 'idle' ? (
+                <div className="bg-gray-100 border-4 border-black rounded-2xl p-6 relative overflow-hidden h-[24rem] shadow-inner mb-8 mt-4 flex flex-col items-center justify-center">
+                    {drawState === 'preview' ? (
+                        <div className="w-full h-full flex flex-col">
+                            <p className="font-comic text-xl text-center text-blue-600 mb-4 animate-bounce">LISTA DE PARTICIPANTES</p>
+                            {drawTickets.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center flex-grow">
+                                    <Clock className="w-12 h-12 animate-spin text-gray-400 mb-2" />
+                                    <p className="font-bold text-gray-500">Cargando participantes...</p>
+                                </div>
+                            ) : (
+                                <div className="flex-grow overflow-hidden relative">
+                                    <motion.div 
+                                        className="flex flex-col gap-2"
+                                        animate={{ 
+                                            y: ["-50%", "0%"] 
+                                        }}
+                                        transition={{ 
+                                            duration: Math.max(10, drawTickets.length * 0.5), 
+                                            repeat: Infinity, 
+                                            ease: "linear" 
+                                        }}
+                                    >
+                                        {[...drawTickets, ...drawTickets].map((t, idx) => (
+                                            <div key={`${t.id}-${idx}`} className="flex justify-between items-center bg-white border-2 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] mx-1">
+                                                <span className="font-bold text-gray-800 text-sm sm:text-base">{protectedName(t.userName)}</span>
+                                                <span className="font-mono bg-yellow-200 px-2 border border-black rounded font-black text-sm sm:text-base">#{t.ticketNumber}</span>
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                    <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-gray-100 to-transparent z-10"></div>
+                                    <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-gray-100 to-transparent z-10"></div>
+                                </div>
+                            )}
+                            <button 
+                                onClick={() => setDrawState('setup')}
+                                disabled={drawTickets.length === 0}
+                                className="mt-4 bg-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-y-1 transition-all"
+                            >
+                                CONTINUAR AL SORTEO
+                            </button>
+                        </div>
+                    ) : drawState === 'setup' || drawState === 'idle' ? (
                         <div className="flex flex-col items-center justify-center min-h-[16rem]">
                             <Search className="w-16 h-16 mb-4 animate-pulse text-gray-400" />
                             <p className="font-comic text-xl text-center text-gray-500">¿QUIÉN SERÁ EL GANADOR?</p>
@@ -1392,14 +1558,16 @@ export default function AdminDashboard() {
                             <div className="flex justify-center gap-2">
                                 <button 
                                     onClick={() => setDrawingPosition(1)}
-                                    className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] ${drawingPosition === 1 ? 'bg-yellow-400' : 'bg-white'}`}
+                                    disabled={activeRaffleForDraw.winners?.some((w: any) => w.position === 1)}
+                                    className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 1 ? 'bg-yellow-400' : 'bg-white'}`}
                                 >
                                     1° Lugar
                                 </button>
                                 {activeRaffleForDraw.prize2 && (
                                     <button 
                                         onClick={() => setDrawingPosition(2)}
-                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] ${drawingPosition === 2 ? 'bg-cyan-200' : 'bg-white'}`}
+                                        disabled={activeRaffleForDraw.winners?.some((w: any) => w.position === 2)}
+                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 2 ? 'bg-cyan-200' : 'bg-white'}`}
                                     >
                                         2° Lugar
                                     </button>
@@ -1407,7 +1575,8 @@ export default function AdminDashboard() {
                                 {activeRaffleForDraw.prize3 && (
                                     <button 
                                         onClick={() => setDrawingPosition(3)}
-                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] ${drawingPosition === 3 ? 'bg-purple-300' : 'bg-white'}`}
+                                        disabled={activeRaffleForDraw.winners?.some((w: any) => w.position === 3)}
+                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 3 ? 'bg-purple-300' : 'bg-white'}`}
                                     >
                                         3° Lugar
                                     </button>
@@ -1484,12 +1653,25 @@ export default function AdminDashboard() {
                             <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8" />
                             ENVIAR WHATSAPP
                         </a>
-                        <button 
-                            onClick={() => setWinnerModalOpen(false)}
-                            className="w-full bg-cyan-400 text-black hover:bg-cyan-500 font-comic text-xl py-3 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
-                        >
-                            FINALIZAR
-                        </button>
+                        {drawingPosition > 1 ? (
+                            <button 
+                                onClick={() => {
+                                    setDrawState('setup');
+                                    setCurrentAttempt(1);
+                                    setDrawingPosition(drawingPosition === 3 ? 2 : 1);
+                                }}
+                                className="w-full bg-yellow-400 text-black hover:bg-yellow-500 font-comic text-xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
+                            >
+                                Pasar al siguiente sorteo ({drawingPosition === 3 ? '2°' : '1°'} lugar)
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={() => setWinnerModalOpen(false)}
+                                className="w-full bg-cyan-400 text-black hover:bg-cyan-500 font-comic text-xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                            >
+                                FINALIZAR
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -1665,6 +1847,23 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {postponeModalOpen && selectedRaffleToPostpone && (
+            <PostponeModal 
+                raffle={selectedRaffleToPostpone} 
+                onClose={() => {
+                    setPostponeModalOpen(false);
+                    setSelectedRaffleToPostpone(null);
+                }}
+                onUpdated={() => {
+                    loadAdminData();
+                    setPostponeModalOpen(false);
+                    setSelectedRaffleToPostpone(null);
+                }}
+            />
+        )}
+      </AnimatePresence>
+
       {/* Global Saving Notification */}
       <AnimatePresence>
         {(saveStatus === 'success' || saveStatus === 'error') && (
@@ -1698,4 +1897,84 @@ export default function AdminDashboard() {
       </AnimatePresence>
     </div>
   );
+}
+
+function PostponeModal({ raffle, onClose, onUpdated }: { raffle: any, onClose: () => void, onUpdated: () => void }) {
+    const defaultDate = new Date(raffle.endDate);
+    const [date, setDate] = useState(defaultDate.toISOString().split('T')[0]);
+    const [time, setTime] = useState(defaultDate.toTimeString().split(' ')[0].substring(0, 5));
+    const [saving, setSaving] = useState(false);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const newEndDate = new Date(`${date}T${time}:00`).getTime();
+            await updateDoc(doc(db, 'raffles', raffle.id), {
+                endDate: newEndDate,
+                updatedAt: serverTimestamp()
+            });
+            alert('Sorteo aplazado con éxito');
+            onUpdated();
+        } catch (e) {
+            console.error(e);
+            alert('Error al aplazar el sorteo');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white border-8 border-black rounded-[2rem] p-8 max-w-md w-full relative shadow-[16px_16px_0px_0px_#a855f7]"
+            >
+                <button onClick={onClose} className="absolute -top-6 -right-6 bg-red-500 text-white w-12 h-12 rounded-full border-4 border-black text-2xl font-bold shadow-[4px_4px_0px_0px_#000]">X</button>
+                
+                <h2 className="text-3xl font-comic text-black mb-6 uppercase">APLAZAR SORTEO</h2>
+                <p className="font-bold text-gray-500 mb-6 bg-gray-100 p-3 border-2 border-black rounded-xl">
+                    {raffle.title}
+                </p>
+
+                <div className="space-y-4 mb-8">
+                    <div className="space-y-1">
+                        <label className="block text-sm font-black ml-2 uppercase">Nueva Fecha</label>
+                        <input 
+                            type="date" 
+                            value={date}
+                            onChange={e => setDate(e.target.value)}
+                            className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="block text-sm font-black ml-2 uppercase">Nueva Hora</label>
+                        <input 
+                            type="time" 
+                            value={time}
+                            onChange={e => setTime(e.target.value)}
+                            className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <button 
+                        onClick={onClose}
+                        className="flex-1 border-4 border-black font-bold py-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
+                    >
+                        Cancelar
+                    </button>
+                    <button 
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1 bg-purple-500 text-white border-4 border-black font-bold py-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase disabled:opacity-50"
+                    >
+                        {saving ? 'Guardando...' : 'Confirmar'}
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    );
 }

@@ -58,6 +58,41 @@ async function startServer() {
     res.json({ url: filePath });
   });
 
+  // Proxy route for Yape payment verification
+  app.post("/api/verify-payment", async (req, res) => {
+    try {
+      const { nombre, apellido, monto, codigoSeguridad, fecha } = req.body;
+      const token = process.env.YAPE_API_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc3ODgzMTU2OX0.hu31n6qTX-enoGYxeIq3IlhOUw3PQkZpRrD2z0WxSbA';
+      const apiUrl = process.env.YAPE_API_URL || 'https://6ed5-38-211-62-100.ngrok-free.app/api/v1/verify/front?use_time_range=true';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          nombre,
+          apellido,
+          monto,
+          codigoSeguridad,
+          fecha
+        })
+      });
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      res.status(500).json({ 
+        matched: false, 
+        payment_status: "ERROR", 
+        reason: "Error interno del servidor al verificar el pago" 
+      });
+    }
+  });
+
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
   });

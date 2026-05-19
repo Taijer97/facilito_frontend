@@ -128,10 +128,14 @@ export default function ProfileCompletionModal() {
                       <input 
                           type="text" 
                           value={name} 
-                          onChange={e => setName(e.target.value)} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                            setName(capitalized);
+                          }} 
                           required 
                           placeholder="Tus nombres"
-                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
                       />
                     </div>
                     <div className="space-y-1">
@@ -141,10 +145,14 @@ export default function ProfileCompletionModal() {
                       <input 
                           type="text" 
                           value={lastName} 
-                          onChange={e => setLastName(e.target.value)} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                            setLastName(capitalized);
+                          }} 
                           required 
                           placeholder="Tus apellidos"
-                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
                       />
                     </div>
                  </div>
@@ -186,10 +194,14 @@ export default function ProfileCompletionModal() {
                    <input 
                       type="text" 
                       value={address} 
-                      onChange={e => setAddress(e.target.value)} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                        setAddress(capitalized);
+                      }} 
                       required 
                       placeholder="Calle, Distrito, Ciudad"
-                      className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                      className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
                    />
                  </div>
 

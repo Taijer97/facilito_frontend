@@ -126,6 +126,11 @@ export default function Home() {
                         <Ticket className="w-10 h-10 text-black opacity-30" />
                       </div>
                     )}
+                    {featuredRaffle.bonusThreshold > 0 && (
+                      <div className="absolute top-2 left-2 bg-green-500 text-white font-black text-[10px] px-2 py-1 rounded-lg border-2 border-black shadow-[2px_2px_0px_0px_#000] transform -rotate-12 z-20 animate-pulse">
+                        ¡LLEVA {featuredRaffle.bonusThreshold} + 1 GRATIS! 🎁
+                      </div>
+                    )}
                     <div className="p-4 text-center bg-white">
                         <h3 className="text-black font-comic text-xl mb-1 truncate">{featuredRaffle.title}</h3>
                         <p className="text-red-500 font-bold text-base mb-3 bg-yellow-200 inline-block px-3 py-1 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_#000] transform -rotate-2">Ticket: S/{featuredRaffle.ticketPrice}</p>
@@ -159,7 +164,7 @@ export default function Home() {
                 <Ticket className="w-12 h-12 text-black" />
               </div>
               <h3 className="text-3xl font-comic text-black mb-4">1. Elige tickets</h3>
-              <p className="text-black font-bold text-lg leading-tight uppercase">Entra al sorteo, elige tus números favoritos y ¡listo! Tienes muchas opciones.</p>
+              <p className="text-black font-bold text-lg leading-tight uppercase">Selecciona el sorteo que más te guste y elige la cantidad de tickets para participar.</p>
             </div>
             
             <div className="flex flex-col items-center text-center bg-cyan-100 comic-border rounded-[3rem] p-10 comic-shadow transform md:translate-y-8 hover:-translate-y-2 transition-all hover:bg-cyan-200">

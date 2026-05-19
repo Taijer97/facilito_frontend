@@ -16,7 +16,7 @@ export default defineConfig(({mode}) => {
       },
     },
     server: {
-      allowedHosts: ['.ngrok-free.app', '<<facilito.jamuywasi.com'],
+      allowedHosts: ['.ngrok-free.app', 'premiosfacilito.com'],
       hmr: process.env.DISABLE_HMR !== 'true',
     },
   };

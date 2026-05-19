@@ -4,9 +4,7 @@ dist/
 coverage/
 .DS_Store
 *.log
-.env*
+.env
 !.env.example
 respaldo_firebase_desrollo/
 respaldo_firebase_produccionario/
-firebase-applet-config.json
-firebase-blueprint.json

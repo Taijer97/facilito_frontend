@@ -1,10 +1,10 @@
 {
-  "projectId": "sorteosfacilito",
-  "appId": "1:337576244475:web:b16a46cc4aefaa2cee2c5e",
-  "apiKey": "AIzaSyAbr6t9mP0569LI1TX4mEGL9Sc4APro5Rc",
-  "authDomain": "sorteosfacilito.firebaseapp.com",
+  "projectId": "gen-lang-client-0554403227",
+  "appId": "1:350660069576:web:e9642dfaefa4c35de6bdfd",
+  "apiKey": "AIzaSyBh9cGaLxVLCLNHfMKGK_dFTvNVfUiaMmQ",
+  "authDomain": "gen-lang-client-0554403227.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-03af377f-1a39-45ff-8d0c-6f7351790019",
-  "storageBucket": "sorteosfacilito.firebasestorage.app",
-  "messagingSenderId": "337576244475",
+  "storageBucket": "gen-lang-client-0554403227.firebasestorage.app",
+  "messagingSenderId": "350660069576",
   "measurementId": ""
 }

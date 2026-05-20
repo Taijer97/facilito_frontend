@@ -3,7 +3,7 @@ import { Ticket, User as UserIcon, LogOut, LogIn, Menu, ShieldAlert, Bell } from
 import { useAuth } from './AuthProvider';
 import { signInWithGoogle, logOut, db } from '../lib/firebase';
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
 import ProfileCompletionModal from './ProfileCompletionModal';
 
 export default function Layout() {
@@ -16,7 +16,17 @@ export default function Layout() {
     const saved = localStorage.getItem('read_notifications');
     return saved ? JSON.parse(saved) : [];
   });
+  const [settings, setSettings] = useState<any>(null);
   const lastEventId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'settings', 'config'), (snap) => {
+      if (snap.exists()) {
+        setSettings(snap.data());
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const markAllAsRead = () => {
     const allIds = notifications.map(n => n.id);
@@ -144,9 +154,9 @@ export default function Layout() {
       <ProfileCompletionModal />
       <header className="bg-yellow-400 shadow-sm border-b-4 border-black sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20">
+          <div className="flex justify-between items-center py-2 sm:py-4">
             <Link to="/" className="flex items-center group">
-              <img src="/logo-v2.png" alt="Premios Facilito" className="w-64 h-32 sm:w-56 sm:h-28 object-contain hover:scale-105 transition-transform" />
+              <img src="/logo-v2.png" alt="Premios Facilito" className="h-12 sm:h-16 w-auto object-contain hover:scale-105 transition-transform" />
             </Link>
 
             <nav className="hidden md:flex space-x-8">
@@ -265,6 +275,20 @@ export default function Layout() {
           </div>
         )}
       </header>
+
+      {settings?.announcementEnabled && settings.announcementText && (
+        <div className="bg-red-500 border-b-4 border-black text-white font-bold overflow-hidden relative shadow-[0px_4px_0px_0px_#000] z-40 py-2 sm:py-3">
+          <div className="flex whitespace-nowrap animate-ticker w-max">
+            {/* We duplicate the text to create a seamless infinite loop */}
+            {[...Array(10)].map((_, i) => (
+              <span key={i} className="px-8 text-sm sm:text-lg uppercase flex items-center space-x-4">
+                <span>{settings.announcementText}</span>
+                <span className="text-yellow-300 px-4">⚡</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <main className="flex-grow">
         <Outlet />

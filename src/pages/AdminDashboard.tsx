@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
   const [allUsers, setAllUsers] = useState<any[]>([]);
-  const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string, yapeName: string, autoPaymentEnabled: boolean}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: '', yapeName: '', autoPaymentEnabled: false});
+  const [appSettings, setAppSettings] = useState<{yapeNumber: string, yapeQrUrl: string, whatsappNumber: string, yapeName: string, autoPaymentEnabled: boolean, announcementEnabled: boolean, announcementText: string}>({yapeNumber: '', yapeQrUrl: '', whatsappNumber: '', yapeName: '', autoPaymentEnabled: false, announcementEnabled: false, announcementText: ''});
   const [activeTab, setActiveTab] = useState<'tickets' | 'raffles_create' | 'raffles_list' | 'users' | 'settings'>('tickets');
   const [isUploading, setIsUploading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
@@ -166,7 +166,9 @@ export default function AdminDashboard() {
       yapeQrUrl: appSettings.yapeQrUrl.trim(),
       whatsappNumber: appSettings.whatsappNumber.trim(),
       yapeName: (appSettings.yapeName || '').trim(),
-      autoPaymentEnabled: !!appSettings.autoPaymentEnabled
+      autoPaymentEnabled: !!appSettings.autoPaymentEnabled,
+      announcementEnabled: !!appSettings.announcementEnabled,
+      announcementText: (appSettings.announcementText || '').trim()
     };
     setAppSettings(settingsToSave);
     await saveSettings(settingsToSave);
@@ -1411,6 +1413,35 @@ export default function AdminDashboard() {
                       <label htmlFor="autoPaymentEnabled" className="font-bold cursor-pointer select-none">
                           Activar Verificación de Pago Automático (Yape)
                       </label>
+                  </div>
+                  
+                  <div className="border-4 border-black p-6 rounded-2xl bg-yellow-50 space-y-4 shadow-[4px_4px_0px_0px_#000]">
+                      <h3 className="text-xl font-comic">Cinta de Anuncios (Banner Marquesina)</h3>
+                      <div className="flex items-center gap-3">
+                          <input 
+                              type="checkbox"
+                              id="announcementEnabled"
+                              checked={!!appSettings.announcementEnabled}
+                              onChange={e => setAppSettings({...appSettings, announcementEnabled: e.target.checked})}
+                              className="w-6 h-6 border-4 border-black"
+                          />
+                          <label htmlFor="announcementEnabled" className="font-bold cursor-pointer select-none">
+                              Activar cinta de anuncios debajo del encabezado
+                          </label>
+                      </div>
+                      
+                      {appSettings.announcementEnabled && (
+                          <div>
+                              <label className="block text-sm font-bold mb-1 uppercase">Texto del anuncio</label>
+                              <input 
+                                  type="text" 
+                                  value={appSettings.announcementText || ''} 
+                                  onChange={e => setAppSettings({...appSettings, announcementText: e.target.value})} 
+                                  placeholder="Ej: 🎉 ¡GRAN SORTEO ESTE FIN DE SEMANA! COMPRA TUS TICKETS YA 🚀"
+                                  className="w-full border-4 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none" 
+                              />
+                          </div>
+                      )}
                   </div>
                   
                   {appSettings.yapeQrUrl && (

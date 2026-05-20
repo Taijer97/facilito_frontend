@@ -14,6 +14,24 @@ export default function UserDashboard() {
   const [fetching, setFetching] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'participating' | 'winner' | 'referrals'>('participating');
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const generateReferralCode = async () => {
+      if (!user || dbUser?.referralCode) return;
+      setIsGeneratingCode(true);
+      try {
+          const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+          await updateDoc(doc(db, 'users', user.uid), {
+             referralCode: newCode
+          });
+      } catch (err) {
+          console.error("Error generating referral code:", err);
+          alert("Hubo un error al generar el código.");
+      } finally {
+          setIsGeneratingCode(false);
+      }
+  };
 
   const hasParticipatingTickets = tickets.some(t => t.status === 'paid' || t.status === 'won');
 
@@ -192,22 +210,42 @@ export default function UserDashboard() {
                 </p>
                 <div className="bg-gray-50 border-4 border-black p-6 rounded-2xl mb-8">
                     <p className="text-sm font-black uppercase text-gray-500 mb-2">Tu Enlace de Referido</p>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <input 
-                            readOnly 
-                            value={`${referralBaseUrl}/?ref=${dbUser?.referralCode || ''}`} 
-                            className="bg-white border-2 border-black rounded-xl p-3 flex-grow font-mono text-sm"
-                        />
-                        <button 
-                            onClick={() => {
-                                navigator.clipboard.writeText(`${referralBaseUrl}/?ref=${dbUser?.referralCode || ''}`);
-                                alert('¡Enlace copiado al portapapeles!');
-                            }}
-                            className="bg-black text-white px-6 py-3 rounded-xl font-bold border-2 border-black hover:bg-gray-800"
-                        >
-                            Copiar
-                        </button>
-                    </div>
+                    {!dbUser?.referralCode ? (
+                        <div className="flex flex-col sm:flex-row gap-3 items-center bg-white p-4 rounded-xl border-2 border-dashed border-gray-300">
+                            <p className="flex-grow text-gray-500 font-bold text-sm text-center sm:text-left">Aún no tienes un código de referido.</p>
+                            <button
+                                onClick={generateReferralCode}
+                                disabled={isGeneratingCode}
+                                className="w-full sm:w-auto bg-purple-500 text-white px-6 py-3 rounded-xl font-bold border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000] transition-all disabled:opacity-50 uppercase"
+                            >
+                                {isGeneratingCode ? 'Generando...' : 'Generar Código'}
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <input 
+                                readOnly 
+                                value={`${referralBaseUrl}/?ref=${dbUser.referralCode}`} 
+                                className="bg-white border-4 border-black rounded-xl p-3 flex-grow font-mono text-sm sm:text-base outline-none shadow-[2px_2px_0px_0px_#000]"
+                            />
+                            <button 
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`${referralBaseUrl}/?ref=${dbUser.referralCode}`);
+                                    setIsCopied(true);
+                                    setTimeout(() => setIsCopied(false), 2000);
+                                }}
+                                className={`px-6 py-3 rounded-xl font-bold border-4 border-black transition-all flex items-center justify-center gap-2 ${isCopied ? 'bg-green-400 text-black translate-x-1 translate-y-1 shadow-[0px_0px_0px_0px_#000]' : 'bg-black text-white shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000]'}`}
+                            >
+                                {isCopied ? (
+                                    <>
+                                        <CheckCircle2 className="w-5 h-5" /> Copiado
+                                    </>
+                                ) : (
+                                    'Copiar Enlace'
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="bg-purple-100 border-4 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_#000] rotate-1">

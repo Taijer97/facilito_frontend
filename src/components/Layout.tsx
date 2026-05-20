@@ -146,7 +146,7 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             <Link to="/" className="flex items-center group">
-              <img src="/logo.png" alt="Premios Facilito" className="w-64 h-32 sm:w-56 sm:h-28 object-contain hover:scale-105 transition-transform" />
+              <img src="/logo-v2.png" alt="Premios Facilito" className="w-64 h-32 sm:w-56 sm:h-28 object-contain hover:scale-105 transition-transform" />
             </Link>
 
             <nav className="hidden md:flex space-x-8">
@@ -274,7 +274,7 @@ export default function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center">
-              <img src="/logo.png" alt="Premios Facilito" className="w-40 h-20 object-contain" />
+              <img src="/logo-v2.png" alt="Premios Facilito" className="w-40 h-20 object-contain" />
             </div>
             <p className="text-black font-bold text-sm">La plataforma de sorteos más transparente del Perú. ¡Participa desde S/1 y gana!</p>
           </div>

@@ -26,7 +26,7 @@
         "description": { "type": "string" },
         "prize": { "type": "string" },
         "ticketPrice": { "type": "number" },
-        "revenueGoal": { "type": "number" },
+        "totalTickets": { "type": "number" },
         "soldTickets": { "type": "number" },
         "status": { "type": "string", "enum": ["active", "drawn", "cancelled"] },
         "endDate": { "type": "number" },
@@ -37,7 +37,7 @@
         "winnerUserId": { "type": "string" },
         "winningTicketNumber": { "type": "string" }
       },
-      "required": ["title", "prize", "ticketPrice", "revenueGoal", "soldTickets", "status", "endDate", "createdAt"]
+      "required": ["title", "prize", "ticketPrice", "totalTickets", "soldTickets", "status", "endDate", "createdAt"]
     },
     "Ticket": {
       "title": "Ticket",

@@ -4,10 +4,15 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import { fileURLToPath } from 'url';
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ override: true });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const serverFilename = typeof import.meta !== 'undefined' && import.meta.url 
+  ? fileURLToPath(import.meta.url) 
+  : (typeof __filename !== 'undefined' ? __filename : '');
+const serverDirname = typeof import.meta !== 'undefined' && import.meta.url 
+  ? path.dirname(serverFilename) 
+  : (typeof __dirname !== 'undefined' ? __dirname : process.cwd());
 
 async function startServer() {
   const app = express();
@@ -16,7 +21,7 @@ async function startServer() {
   // Use memory storage for quick processing or disk storage to save to public
   const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      const dir = path.join(__dirname, 'public', 'qrs');
+      const dir = path.join(serverDirname, 'public', 'qrs');
       if (!fs.existsSync(dir)){
           fs.mkdirSync(dir, { recursive: true });
       }
@@ -37,7 +42,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
   // Ensure public/qrs exists at startup
-  const qrDir = path.join(__dirname, 'public', 'qrs');
+  const qrDir = path.join(serverDirname, 'public', 'qrs');
   if (!fs.existsSync(qrDir)) {
     fs.mkdirSync(qrDir, { recursive: true });
   }
@@ -82,7 +87,7 @@ async function startServer() {
 
     console.log("🔐 Generando nuevo token de acceso para Yape mediante endpoint...");
     try {
-      const authUrl = 'https://6ed5-38-211-62-100.ngrok-free.app/api/v1/auth/token';
+      const authUrl = process.env.YAPE_API_AUTH || 'https://e5d1-38-211-62-100.ngrok-free.app/api/v1/auth/token';
       const response = await fetch(authUrl, {
         method: 'POST',
         headers: {
@@ -99,7 +104,15 @@ async function startServer() {
         throw new Error(`Error de autenticación (${response.status}): ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch (err) {
+        console.error(`❌ Yape Auth endpoint did not return valid JSON. Response starts with: ${responseText.substring(0, 200)}`);
+        throw new Error("El portal externo de autenticación de Yape se encuentra fuera de servicio (retornó una respuesta ilegible).");
+      }
+
       if (data && data.access_token) {
         cachedYapeToken = data.access_token;
         console.log("✅ Nuevo Token de Yape generado exitosamente.");
@@ -118,11 +131,15 @@ async function startServer() {
     try {
       const { nombre, apellido, monto, codigoSeguridad, fecha } = req.body;
       let token = await getYapeAccessToken();
-      const apiUrl = process.env.YAPE_API_URL || 'https://6ed5-38-211-62-100.ngrok-free.app/api/v1/verify/front?use_time_range=true';
+      const apiUrl = process.env.YAPE_API_URL || 'https://e5d1-38-211-62-100.ngrok-free.app/api/v1/verify/front?use_time_range=true';
 
       if (!token) {
         console.error("❌ No se pudo obtener un token válido");
-        return res.status(500).json({ error: "No se pudo autenticar con el servicio de Yape" });
+        return res.status(200).json({ 
+          matched: false, 
+          payment_status: "ERROR", 
+          reason: "No se pudo autenticar con el servicio externo de Yape. El portal de verificación podría estar temporalmente fuera de línea." 
+        });
       }
 
       const makeRequest = async (currentToken: string) => {
@@ -144,8 +161,22 @@ async function startServer() {
         });
       };
 
+      const handleResponse = async (resp: Response) => {
+        const text = await resp.text();
+        try {
+          return JSON.parse(text);
+        } catch (err) {
+          console.error(`Received invalid JSON from Yape Verification. Status: ${resp.status}. Response starts with: ${text.substring(0, 200)}`);
+          return {
+            error: true,
+            isHtmlError: true,
+            rawText: text
+          };
+        }
+      };
+
       let response = await makeRequest(token);
-      let data = await response.json();
+      let data = await handleResponse(response);
 
       // If token is invalid, refresh it and retry
       if (data && (data.detail === "Token inválido" || data.detail === "Could not validate credentials")) {
@@ -153,15 +184,28 @@ async function startServer() {
         token = await getYapeAccessToken(true); // FORCED REFRESH
         if (token) {
           response = await makeRequest(token);
-          data = await response.json();
+          data = await handleResponse(response);
         }
       }
 
+      if (data && data.isHtmlError) {
+        let errorMsg = "La API de Yape retornó una respuesta que no es JSON válido.";
+        if (data.rawText && data.rawText.includes("ngrok")) {
+          errorMsg = "El servidor de verificación externa de Yape (Ngrok) se encuentra desconectado u offline. Por favor, selecciona el método manual o avisa al soporte para activar el servicio automático.";
+        }
+        console.log("❌ Error de formato externo (Ngrok):", errorMsg);
+        return res.status(200).json({
+          matched: false,
+          payment_status: "ERROR",
+          reason: errorMsg
+        });
+      }
+      
       console.log("Yape API Response:", JSON.stringify(data));
       res.json(data);
     } catch (error) {
       console.error("Error verifying payment:", error);
-      res.status(500).json({ 
+      res.status(200).json({ 
         matched: false, 
         payment_status: "ERROR", 
         reason: "Error interno del servidor al verificar el pago" 
@@ -186,7 +230,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(__dirname, 'dist');
+    const distPath = path.join(serverDirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));

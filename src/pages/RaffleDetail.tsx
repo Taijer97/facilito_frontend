@@ -29,11 +29,13 @@ export default function RaffleDetail() {
 
   // Automatic Payment state
   const [isAutoActive, setIsAutoActive] = useState(false);
+  const [hasYaped, setHasYaped] = useState(false);
   const [securityCode, setSecurityCode] = useState('');
   const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
   const [verifying, setVerifying] = useState(false);
   const [autoApproved, setAutoApproved] = useState(false);
   const [wasAutoPaid, setWasAutoPaid] = useState(false);
+  const [autoVerifyAttempts, setAutoVerifyAttempts] = useState(0);
   const [autoStatus, setAutoStatus] = useState<{ type: 'idle' | 'verifying' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
 
   const handleLogin = async () => {
@@ -87,16 +89,17 @@ export default function RaffleDetail() {
   }, [user, dbUser]);
 
   useEffect(() => {
-    if (isAutoActive && timeLeft > 0) {
+    if (isAutoActive && hasYaped && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft(prev => prev - 1);
       }, 1000);
       return () => clearInterval(timer);
-    } else if (timeLeft === 0) {
+    } else if (isAutoActive && hasYaped && timeLeft === 0) {
       setIsAutoActive(false);
+      setHasYaped(false);
       alert("El tiempo para el pago automático ha expirado. Por favor, intenta de nuevo o usa el método manual.");
     }
-  }, [isAutoActive, timeLeft]);
+  }, [isAutoActive, hasYaped, timeLeft]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -105,6 +108,11 @@ export default function RaffleDetail() {
   };
 
   const handleAutoVerify = async () => {
+    if (autoVerifyAttempts >= 3) {
+      alert("⚠️ Has superado el límite de 3 intentos de verificación automática. Por favor utiliza el método manual.");
+      return;
+    }
+
     if (securityCode.length !== 3) {
       alert("⚠️ El código de seguridad debe tener 3 dígitos");
       return;
@@ -130,9 +138,30 @@ export default function RaffleDetail() {
             })
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+        let data: any;
+        try {
+            data = JSON.parse(responseText);
+        } catch (err) {
+            console.error("No JSON response starting with: ", responseText.substring(0, 100));
+            setAutoStatus({ 
+                type: 'error', 
+                message: '🔌 El servidor de verificación retornó una respuesta ilegible. Si ya realizaste el pago, por favor selecciona el método manual para que soporte lo verifique de inmediato.' 
+            });
+            setAutoVerifyAttempts(prev => prev + 1);
+            return;
+        }
 
         if (data.matched) {
+            if (data.payment_status === "YA_PAGADO" || data.reason === "Pago ya registrado") {
+                setAutoStatus({ 
+                    type: 'error', 
+                    message: '❌ Pago ya registrado: El código de seguridad e importe ingresados ya fueron validados para otra compra. No se permite duplicar ni reutilizar pagos.' 
+                });
+                setAutoVerifyAttempts(prev => prev + 1);
+                return;
+            }
+
             setAutoStatus({ type: 'success', message: '✅ ¡PAGO VERIFICADO! Procesando tus tickets...' });
             setWasAutoPaid(true);
             setTimeout(() => {
@@ -149,10 +178,12 @@ export default function RaffleDetail() {
             };
             const msg = reasonMap[data.reason] || `⚠️ ${data.reason || 'No se pudo verificar el pago. Intenta de nuevo.'}`;
             setAutoStatus({ type: 'error', message: msg });
+            setAutoVerifyAttempts(prev => prev + 1);
         }
     } catch (error) {
         console.error("Error verifying payment:", error);
         setAutoStatus({ type: 'error', message: '🔌 Error de conexión con el servidor de validación.' });
+        setAutoVerifyAttempts(prev => prev + 1);
     } finally {
         setVerifying(false);
     }
@@ -487,6 +518,7 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                                             return;
                                         }
                                         setIsAutoActive(true);
+                                        setHasYaped(false);
                                         setTimeLeft(180);
                                         setPaymentMethod('yape');
                                     }} 
@@ -500,12 +532,19 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
 
                             {isAutoActive ? (
                                 <div className="bg-white border-4 border-black rounded-2xl p-6 shadow-[6px_6px_0px_0px_#000] space-y-6">
-                                    <div className="flex justify-between items-center bg-red-100 border-2 border-black p-2 rounded-xl mb-4">
+                                    <div className="flex justify-between items-center bg-purple-100 border-4 border-black p-4 rounded-xl">
                                         <div className="flex items-center gap-2">
-                                            <Clock className="w-5 h-5 text-red-600 animate-pulse" />
-                                            <span className="font-bold text-red-700">TIEMPO RESTANTE:</span>
+                                            <span className="font-black text-purple-800 text-lg sm:text-xl">⚡ PAGO AUTOMÁTICO</span>
                                         </div>
-                                        <span className="font-comic text-2xl text-red-600">{formatTime(timeLeft)}</span>
+                                        <button 
+                                            onClick={() => {
+                                                setIsAutoActive(false);
+                                                setHasYaped(false);
+                                            }}
+                                            className="bg-white hover:bg-gray-100 text-black font-bold border-2 border-black px-3 py-1 text-xs rounded shadow-[2px_2px_0px_0px_#000]"
+                                        >
+                                            Cancelar
+                                        </button>
                                     </div>
 
                                     <AnimatePresence>
@@ -524,38 +563,133 @@ Adjunto comprobante de pago para la aprobacion de mis tickets.`;
                                         )}
                                     </AnimatePresence>
 
-                                    <div className="space-y-4 text-left">
-                                        <p className="font-bold text-lg border-b-2 border-black pb-1">INSTRUCCIONES:</p>
-                                        <ol className="list-decimal list-inside space-y-2 font-bold text-sm">
-                                            <li>Escanea el código QR de Yape (abajo).</li>
-                                            <li>Realiza el pago verificando el nombre <span className="text-blue-600 uppercase">({settings?.yapeName || 'Titular'})</span> y el monto <span className="text-red-500">S/{total}</span>.</li>
-                                            <li>Digita el <span className="text-purple-600 uppercase">código de seguridad</span> de tu Yape (3 dígitos).</li>
-                                        </ol>
-                                    </div>
+                                    {!hasYaped ? (
+                                        <div className="space-y-6">
+                                            <div className="space-y-4 text-left">
+                                                <p className="font-bold text-lg border-b-2 border-black pb-1">INSTRUCCIONES:</p>
+                                                <ol className="list-decimal list-inside space-y-2 font-bold text-sm">
+                                                    <li>Escanea el código QR de Yape (abajo) o yapea directamente.</li>
+                                                    <li>Realiza el pago verificando el nombre <span className="text-blue-600 uppercase">({settings?.yapeName || 'Titular'})</span> y el monto <span className="text-red-500">S/{total}</span>.</li>
+                                                    <li className="text-red-700 bg-red-50 border border-red-300 p-2 rounded-xl">
+                                                        ⚠️ <strong>Importante:</strong> Solo tiene 3 minutos para poner el código de seguridad una vez que presione el botón "¡Ya yapeé!".
+                                                    </li>
+                                                </ol>
+                                            </div>
 
-                                    {settings?.yapeQrUrl && (
-                                        <img src={settings.yapeQrUrl} alt="QR Pago" className="w-40 h-40 mx-auto border-4 border-black shadow-[4px_4px_0px_0px_#000]" />
+                                            {settings?.yapeQrUrl && (
+                                                <div className="text-center space-y-3">
+                                                    <img src={settings.yapeQrUrl} alt="QR Pago" className="w-44 h-44 mx-auto border-4 border-black shadow-[4px_4px_0px_0px_#000] rounded-xl" />
+                                                    {settings?.yapeName && (
+                                                        <p className="font-bold text-sm text-gray-700 bg-white border border-gray-300 rounded-lg py-1 px-3 inline-block">
+                                                            Titular: {settings.yapeName}
+                                                        </p>
+                                                    )}
+                                                    {settings?.yapeNumber && (
+                                                        <div className="max-w-xs mx-auto">
+                                                            <div className="bg-slate-50 border-2 border-dashed border-gray-400 p-2 rounded-xl flex items-center justify-between">
+                                                                <span className="font-mono font-bold text-sm">{settings.yapeNumber}</span>
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(settings.yapeNumber);
+                                                                        setCopied(true);
+                                                                        setTimeout(() => setCopied(false), 2000);
+                                                                    }}
+                                                                    className="bg-black text-white text-xs px-2 py-1 rounded font-bold"
+                                                                >
+                                                                    {copied ? '¡Copiado!' : 'Copiar'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <button 
+                                                onClick={() => {
+                                                    setHasYaped(true);
+                                                    setTimeLeft(180);
+                                                }}
+                                                className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all uppercase"
+                                            >
+                                                ¡Ya yapeé! 👍
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            {autoVerifyAttempts >= 3 ? (
+                                                <div className="bg-red-50 border-4 border-red-500 rounded-2xl p-6 text-center space-y-4">
+                                                    <p className="font-black text-red-600 text-lg uppercase animate-pulse">🚨 LÍMITE DE INTENTOS SUPERADO ({autoVerifyAttempts}/3)</p>
+                                                    <p className="font-bold text-red-700 text-sm leading-relaxed">
+                                                        Por motivos de seguridad y tras haber alcanzado el límite de 3 intentos permitidos, la verificación automática ha sido bloqueada. <strong>No nos hacemos responsables por más intentos de verificación automática que fallen o queden pendientes de procesamiento.</strong>
+                                                    </p>
+                                                    <p className="font-black text-black text-xs uppercase bg-yellow-300 border-2 border-black inline-block px-3 py-1.5 rounded-lg shadow-[2px_2px_0px_0px_#000]">
+                                                        Por favor, presiona el botón de abajo para cambiar al Método Manual, donde podrás subir tu captura de pago directamente para una verificación inmediata por el administrador.
+                                                    </p>
+                                                    
+                                                    <button 
+                                                        onClick={() => {
+                                                            setIsAutoActive(false);
+                                                            setHasYaped(false);
+                                                            setPaymentMethod('yape');
+                                                        }}
+                                                        className="w-full bg-black hover:bg-gray-800 text-white font-comic text-xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all uppercase"
+                                                    >
+                                                        Ir a Verificación Manual 👍
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex justify-between items-center bg-red-100 border-2 border-black p-3 rounded-xl">
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock className="w-5 h-5 text-red-600 animate-pulse" />
+                                                            <span className="font-bold text-red-700 text-sm">TIEMPO RESTANTE (Intento {autoVerifyAttempts + 1}/3):</span>
+                                                        </div>
+                                                        <span className="font-comic text-2xl text-red-600">{formatTime(timeLeft)}</span>
+                                                    </div>
+
+                                                    <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 text-center">
+                                                        <p className="font-black text-red-600 text-md uppercase">🚨 ¡Atención!</p>
+                                                        <p className="font-bold text-red-700 text-xs mt-1">
+                                                            Importante: Solo tiene 3 minutos para poner el código de seguridad. Si el tiempo expira, se cancelará la sesión.
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="space-y-4 bg-yellow-50 border-4 border-black p-6 rounded-2xl shadow-[4px_4px_0px_0px_#000]">
+                                                        <label className="block text-center font-black uppercase text-sm">
+                                                            Código de Seguridad (3 dígitos):
+                                                        </label>
+                                                        <input 
+                                                            type="text" 
+                                                            maxLength={3}
+                                                            value={securityCode}
+                                                            onChange={(e) => setSecurityCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
+                                                            placeholder="000"
+                                                            className="w-32 mx-auto block text-center text-3xl font-comic border-4 border-black rounded-xl py-2 shadow-[2px_2px_0px_0px_#000] focus:bg-yellow-100 outline-none"
+                                                        />
+                                                        <p className="text-center text-[10px] text-gray-500 font-bold uppercase mt-2">
+                                                            Ingresa los 3 dígitos de confirmación que aparecen en tu Yape
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex gap-4">
+                                                        <button 
+                                                            onClick={() => setHasYaped(false)}
+                                                            className="w-1/3 bg-white hover:bg-gray-100 text-black font-bold py-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] text-xs"
+                                                        >
+                                                            ← Ver QR / Info
+                                                        </button>
+                                                        <button 
+                                                            onClick={handleAutoVerify}
+                                                            disabled={verifying || securityCode.length !== 3}
+                                                            className="flex-grow bg-green-500 disabled:bg-gray-300 text-white font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+                                                        >
+                                                            {verifying ? 'VERIFICANDO...' : 'VERIFICAR PAGO'}
+                                                        </button>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
                                     )}
-
-                                    <div className="space-y-2">
-                                        <label className="block text-center font-black uppercase text-sm">Código de Seguridad (3 dígitos):</label>
-                                        <input 
-                                            type="text" 
-                                            maxLength={3}
-                                            value={securityCode}
-                                            onChange={(e) => setSecurityCode(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                                            placeholder="000"
-                                            className="w-32 mx-auto block text-center text-3xl font-comic border-4 border-black rounded-xl py-2 shadow-[2px_2px_0px_0px_#000] focus:bg-yellow-100 outline-none"
-                                        />
-                                    </div>
-
-                                    <button 
-                                        onClick={handleAutoVerify}
-                                        disabled={verifying || securityCode.length !== 3}
-                                        className="w-full bg-green-500 disabled:bg-gray-300 text-white font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
-                                    >
-                                        {verifying ? 'VERIFICANDO...' : 'VERIFICAR PAGO'}
-                                    </button>
                                 </div>
                             ) : (
                                 <>

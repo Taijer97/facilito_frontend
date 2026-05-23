@@ -69,14 +69,21 @@ service cloud.firestore {
  
      match /raffles/{raffleId} {
          allow read: if true; 
-         allow write: if isAdminOrSupport();
+         allow update: if isAdminOrSupport() || (
+           isSignedIn() &&
+           incoming().diff(existing()).affectedKeys().hasOnly(['soldTickets', 'revenue']) &&
+           incoming().soldTickets is int && incoming().soldTickets >= existing().soldTickets &&
+           incoming().revenue is number && incoming().revenue >= existing().revenue
+         );
+         allow create, delete: if isAdminOrSupport();
      }
      
      match /tickets/{ticketId} {
         allow get: if isSignedIn() && (request.auth.uid == existing().userId || isAdminOrSupport());
         allow list: if isSignedIn() && (isAdminOrSupport() || resource.data.userId == request.auth.uid);
         
-        allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().status == 'pending_payment';
+        allow create: if (isSignedIn() && incoming().userId == request.auth.uid && (incoming().status == 'pending_payment' || incoming().status == 'paid'))
+                      || isAdminOrSupport();
         allow update, delete: if isAdminOrSupport();
      }
   }

@@ -5,4 +5,9 @@ services:
       args:
         GEMINI_API_KEY: ${GEMINI_API_KEY-}
     ports:
-      - "3007:80"
+      - "3007:3000"
+    environment:
+      NODE_ENV: production
+      YAPE_API_AUTH: ${YAPE_API_AUTH-}
+      YAPE_API_URL: ${YAPE_API_URL-}
+      YAPE_API_TOKEN: ${YAPE_API_TOKEN-}

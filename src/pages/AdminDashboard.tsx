@@ -737,32 +737,32 @@ export default function AdminDashboard() {
   }, [drawState, autoMode, currentAttempt, attemptTarget]);
 
   if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'support')) {
-      return <div className="p-20 text-center font-comic text-3xl text-red-500 bg-white border-4 border-black m-10 shadow-[8px_8px_0px_0px_#000] rotate-1">ACCESO DENEGADO</div>;
+      return <div className="p-20 text-center font-comic text-xl text-red-500 bg-white border-2 border-black m-10 shadow-[2px_2px_0px_0px_#000] rotate-1">ACCESO DENEGADO</div>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
-      <h1 className="text-3xl sm:text-5xl font-comic text-black mb-8 sm:mb-12 inline-block bg-cyan-400 border-4 border-black px-4 sm:px-6 py-2 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] transform sm:-rotate-1 text-center sm:text-left w-full sm:w-auto uppercase">{dbUser?.role === 'admin' ? 'PANEL ADMIN' : 'PANEL SOPORTE'}</h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-4 lg:px-4 py-4 sm:py-3">
+      <h1 className="text-lg sm:text-lg font-comic text-black mb-6 sm:mb-4 inline-block bg-cyan-400 border-2 border-black px-4 sm:px-4 py-2 shadow-[2px_2px_0px_0px_#000] transform sm:-rotate-1 text-center sm:text-left w-full sm:w-auto uppercase">{dbUser?.role === 'admin' ? 'PANEL ADMIN' : 'PANEL SOPORTE'}</h1>
       
       {/* Tabs */}
-      <div className="flex flex-row overflow-x-auto pb-4 sm:pb-0 sm:flex-wrap gap-3 sm:gap-4 mb-8 sm:mb-10 no-scrollbar">
+      <div className="flex flex-row overflow-x-auto pb-4 sm:pb-0 sm:flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-4 no-scrollbar">
           {(dbUser?.role === 'admin' || dbUser?.role === 'support') && (
             <>
               <button 
                   onClick={() => setActiveTab('tickets')}
-                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'tickets' ? 'bg-yellow-400' : 'bg-white'}`}
+                  className={`whitespace-nowrap px-3 py-1.5 sm:px-4 sm:py-2 font-comic text-sm sm:text-base border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${activeTab === 'tickets' ? 'bg-yellow-400' : 'bg-white'}`}
               >
                   GESTIÓN TICKETS
               </button>
               <button 
                   onClick={() => setActiveTab('raffles_create')}
-                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'raffles_create' ? 'bg-orange-400' : 'bg-white'}`}
+                  className={`whitespace-nowrap px-3 py-1.5 sm:px-4 sm:py-2 font-comic text-sm sm:text-base border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${activeTab === 'raffles_create' ? 'bg-orange-400' : 'bg-white'}`}
               >
                   NUEVO SORTEO
               </button>
               <button 
                   onClick={() => setActiveTab('raffles_list')}
-                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'raffles_list' ? 'bg-cyan-400' : 'bg-white'}`}
+                  className={`whitespace-nowrap px-3 py-1.5 sm:px-4 sm:py-2 font-comic text-sm sm:text-base border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${activeTab === 'raffles_list' ? 'bg-cyan-400' : 'bg-white'}`}
               >
                   LISTA SORTEOS
               </button>
@@ -772,13 +772,13 @@ export default function AdminDashboard() {
             <>
               <button 
                   onClick={() => setActiveTab('users')}
-                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'users' ? 'bg-purple-400' : 'bg-white'}`}
+                  className={`whitespace-nowrap px-3 py-1.5 sm:px-4 sm:py-2 font-comic text-sm sm:text-base border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${activeTab === 'users' ? 'bg-purple-400' : 'bg-white'}`}
               >
                   USUARIOS
               </button>
               <button 
                   onClick={() => setActiveTab('settings')}
-                  className={`whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2 font-comic text-lg sm:text-xl border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] transition-all ${activeTab === 'settings' ? 'bg-red-400 text-white' : 'bg-white'}`}
+                  className={`whitespace-nowrap px-3 py-1.5 sm:px-4 sm:py-2 font-comic text-sm sm:text-base border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all ${activeTab === 'settings' ? 'bg-red-400 text-white' : 'bg-white'}`}
               >
                   PAGOS
               </button>
@@ -788,24 +788,24 @@ export default function AdminDashboard() {
 
       {activeTab === 'tickets' && (
           <div className="space-y-8">
-            <div className="bg-white border-4 sm:border-8 border-black rounded-3xl sm:rounded-[3rem] p-4 sm:p-8 shadow-[12px_12px_0px_0px_#000] sm:shadow-[12px_12px_0px_0px_#000] min-h-[400px] flex flex-col">
-                <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div className="bg-white border-2 sm:border-2 border-black rounded-xl sm:rounded-2xl p-4 sm:p-4 shadow-[2px_2px_0px_0px_#000] sm:shadow-[2px_2px_0px_0px_#000] min-h-[400px] flex flex-col">
+                <div className="flex items-center justify-between mb-6 sm:mb-4">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
-                    <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none">Validación de Tickets</h2>
+                    <h2 className="text-lg sm:text-xl font-comic text-black uppercase leading-none">Validación de Tickets</h2>
                   </div>
                 </div>
                 
                 <div className="space-y-10 overflow-y-auto pr-2 flex-grow max-h-[1000px] custom-scrollbar">
                     <div>
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-yellow-300 border-4 border-black px-4 py-1 rounded-2xl shadow-[4px_4px_0px_0px_#000]">
+                            <div className="bg-yellow-300 border-2 border-black px-4 py-1 rounded-2xl shadow-[2px_2px_0px_0px_#000]">
                                 <p className="font-comic text-xl">ÓRDENES PENDIENTES ({pendingGroups.length})</p>
                             </div>
                         </div>
                         <div className="space-y-4">
                             {pendingGroups.length === 0 ? (
-                                <div className="bg-gray-50 border-4 border-dashed border-gray-200 rounded-3xl p-10 text-center text-gray-400 font-bold italic">No hay órdenes pendientes.</div>
+                                <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-4 text-center text-gray-400 font-bold italic">No hay órdenes pendientes.</div>
                             ) : (
                                 pendingGroups.map(group => {
                                     const earliestTicketTime = group.createdAt;
@@ -817,7 +817,7 @@ export default function AdminDashboard() {
                                         <div 
                                           key={group.id} 
                                           onClick={() => setSelectedGroupId(group.id)} 
-                                          className={`p-5 border-4 border-black rounded-3xl flex justify-between items-center shadow-[6px_6px_0px_0px_#000] cursor-pointer hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all ${isExpired ? 'bg-red-50 border-red-500' : 'bg-yellow-50'}`}
+                                          className={`p-5 border-2 border-black rounded-xl flex justify-between items-center shadow-[2px_2px_0px_0px_#000] cursor-pointer hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all ${isExpired ? 'bg-red-50 border-red-500' : 'bg-yellow-50'}`}
                                         >
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
@@ -834,7 +834,7 @@ export default function AdminDashboard() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <button className="bg-cyan-400 border-4 border-black px-4 py-2 rounded-xl font-bold shadow-[3px_3px_0px_0px_#000]">GESTIONAR</button>
+                                            <button className="bg-cyan-400 border-2 border-black px-4 py-2 rounded-xl font-bold shadow-[3px_3px_0px_0px_#000]">GESTIONAR</button>
                                         </div>
                                     );
                                 })
@@ -845,9 +845,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* RECUPERAR TICKETS (BUSQUEDA) */}
-            <div className="bg-white border-4 border-black rounded-3xl p-6 sm:p-8 shadow-[12px_12px_0px_0px_#000]">
+            <div className="bg-white border-2 border-black rounded-xl p-4 sm:p-4 shadow-[2px_2px_0px_0px_#000]">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-red-400 border-4 border-black px-4 py-1 rounded-2xl shadow-[4px_4px_0px_0px_#000] text-white">
+                    <div className="bg-red-400 border-2 border-black px-4 py-1 rounded-2xl shadow-[2px_2px_0px_0px_#000] text-white">
                         <p className="font-comic text-xl uppercase">Buscador y Recuperación</p>
                     </div>
                 </div>
@@ -860,19 +860,19 @@ export default function AdminDashboard() {
                             onChange={e => setSearchQuery(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleSearchTickets()}
                             placeholder="Buscar por Nombre o Nro de Ticket..."
-                            className="flex-grow border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold"
+                            className="flex-grow border-2 border-black p-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold"
                         />
                         <button 
                             onClick={handleSearchTickets}
                             disabled={isSearching}
-                            className="bg-black text-white px-6 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
+                            className="bg-black text-white px-4 rounded-2xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
                         >
                             {isSearching ? '...' : <Search className="w-6 h-6" />}
                         </button>
                     </div>
 
                     {searchResults.length > 0 && (
-                        <div className="space-y-3 bg-gray-100 p-4 rounded-3xl border-4 border-black shadow-inner max-h-[500px] overflow-y-auto">
+                        <div className="space-y-3 bg-gray-100 p-4 rounded-xl border-2 border-black shadow-inner max-h-[500px] overflow-y-auto">
                             {searchResults.map(t => (
                                 <div key={t.id} className="bg-white border-2 border-black p-4 rounded-xl flex justify-between items-center gap-4 shadow-[3px_3px_0px_0px_#000]">
                                     <div>
@@ -908,12 +908,12 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === 'raffles_create' && (
-        <div className="bg-white border-4 sm:border-8 border-black rounded-3xl sm:rounded-[3rem] p-4 sm:p-8 shadow-[12px_12px_0px_0px_#ff4d4d] sm:shadow-[12px_12px_0px_0px_#ff4d4d] max-w-4xl w-full mx-auto">
-              <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8">
-                <div className="bg-red-500 p-2 border-2 sm:border-4 border-black rounded-xl">
+        <div className="bg-white border-2 sm:border-2 border-black rounded-xl sm:rounded-2xl p-4 sm:p-4 shadow-[2px_2px_0px_0px_#ff4d4d] sm:shadow-[2px_2px_0px_0px_#ff4d4d] max-w-4xl w-full mx-auto">
+              <div className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-4">
+                <div className="bg-red-500 p-2 border-2 sm:border-2 border-black rounded-xl">
                     <Ticket className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none">Crear Sorteo</h2>
+                <h2 className="text-lg sm:text-xl font-comic text-black uppercase leading-none">Crear Sorteo</h2>
               </div>
 
               <form onSubmit={handleCreateRaffle} className="space-y-4 sm:space-y-6">
@@ -929,7 +929,7 @@ export default function AdminDashboard() {
                         }} 
                         required 
                         placeholder="Ej: Sorteo de una Laptop"
-                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize" 
+                        className="w-full border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize" 
                       />
                   </div>
 
@@ -940,11 +940,11 @@ export default function AdminDashboard() {
                         onChange={e=>setDescription(e.target.value)} 
                         required 
                         placeholder="Detalla los premios y condiciones..."
-                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold min-h-[120px]" 
+                        className="w-full border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold min-h-[120px]" 
                       />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                           <label className="block text-sm font-black ml-2 uppercase">Premio Principal (1° Puesto)</label>
                           <input 
@@ -956,7 +956,7 @@ export default function AdminDashboard() {
                                 setPrize(capitalized);
                             }} 
                             required 
-                            className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold capitalize" 
+                            className="w-full border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold capitalize" 
                           />
                       </div>
                       <div className="space-y-1">
@@ -966,7 +966,7 @@ export default function AdminDashboard() {
                             value={price} 
                             onChange={e=>setPrice(e.target.value)} 
                             required 
-                            className="w-full sm:w-40 border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                            className="w-full sm:w-40 border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold" 
                           />
                       </div>
                   </div>
@@ -981,7 +981,7 @@ export default function AdminDashboard() {
                     </button>
 
                     {showExtraPrizes && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-6 border-4 border-dashed border-black rounded-3xl bg-gray-50 animate-in fade-in slide-in-from-top-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border-2 border-dashed border-black rounded-xl bg-gray-50 animate-in fade-in slide-in-from-top-2">
                          <div className="space-y-4">
                             <div className="space-y-1">
                                 <label className="block text-sm font-black ml-2 uppercase">2° Puesto - Premio</label>
@@ -994,7 +994,7 @@ export default function AdminDashboard() {
                                       setPrize2(capitalized);
                                   }} 
                                   placeholder="Segundo premio (Opcional)"
-                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold capitalize" 
+                                  className="w-full border-2 border-black p-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold capitalize" 
                                 />
                             </div>
                             <div className="space-y-1">
@@ -1004,7 +1004,7 @@ export default function AdminDashboard() {
                                   value={imageUrl2} 
                                   onChange={e=>setImageUrl2(e.target.value)} 
                                   placeholder="https://ejemplo.com/premio2.jpg"
-                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                  className="w-full border-2 border-black p-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold" 
                                 />
                                 {imageUrl2 && (
                                     <div className="mt-2 border-2 border-black rounded-xl overflow-hidden shadow-[2px_2px_0px_0px_#000] h-16 w-16">
@@ -1025,7 +1025,7 @@ export default function AdminDashboard() {
                                       setPrize3(capitalized);
                                   }} 
                                   placeholder="Tercer premio (Opcional)"
-                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold capitalize" 
+                                  className="w-full border-2 border-black p-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold capitalize" 
                                 />
                             </div>
                             <div className="space-y-1">
@@ -1035,7 +1035,7 @@ export default function AdminDashboard() {
                                   value={imageUrl3} 
                                   onChange={e=>setImageUrl3(e.target.value)} 
                                   placeholder="https://ejemplo.com/premio3.jpg"
-                                  className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] outline-none font-bold" 
+                                  className="w-full border-2 border-black p-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold" 
                                 />
                                 {imageUrl3 && (
                                     <div className="mt-2 border-2 border-black rounded-xl overflow-hidden shadow-[2px_2px_0px_0px_#000] h-16 w-16">
@@ -1048,7 +1048,7 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                           <label className="block text-sm font-black ml-2 uppercase">Meta de Recaudación (S/)</label>
                           <input 
@@ -1056,7 +1056,7 @@ export default function AdminDashboard() {
                             value={revenueGoal} 
                             onChange={e=>setRevenueGoal(e.target.value)} 
                             required 
-                            className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                            className="w-full border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold" 
                           />
                       </div>
                       <div className="space-y-1">
@@ -1067,14 +1067,14 @@ export default function AdminDashboard() {
                               value={endDateInput} 
                               onChange={e=>setEndDateInput(e.target.value)} 
                               required 
-                              className="flex-grow border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold w-full" 
+                              className="flex-grow border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold w-full" 
                             />
                             <input 
                               type="time" 
                               value={endTimeInput} 
                               onChange={e=>setEndTimeInput(e.target.value)} 
                               required 
-                              className="w-full sm:w-40 border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                              className="w-full sm:w-40 border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold" 
                             />
                           </div>
                       </div>
@@ -1086,20 +1086,20 @@ export default function AdminDashboard() {
                                 value={bonusThreshold} 
                                 onChange={e=>setBonusThreshold(e.target.value)} 
                                 placeholder="Cada X tickets dar 1 gratis"
-                                className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                                className="w-full border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold" 
                               />
                           </div>
                           <p className="text-[10px] font-bold ml-2 text-gray-500">Cada {bonusThreshold || 'X'} tickets comprados se regalará 1 automáticamente.</p>
                       </div>
                   </div>
 
-                  <div className="flex items-center gap-3 bg-yellow-100 p-4 border-4 border-black rounded-3xl shadow-[4px_4px_0px_0px_#000]">
+                  <div className="flex items-center gap-3 bg-yellow-100 p-4 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000]">
                       <input 
                         type="checkbox" 
                         id="eliminateThrowaways"
                         checked={eliminateThrowaways} 
                         onChange={e => setEliminateThrowaways(e.target.checked)}
-                        className="w-8 h-8 border-4 border-black rounded-xl cursor-pointer"
+                        className="w-8 h-8 border-2 border-black rounded-xl cursor-pointer"
                       />
                       <label htmlFor="eliminateThrowaways" className="font-comic text-lg text-black cursor-pointer select-none">
                         Eliminar tickets "al agua" (no vuelven a participar en este sorteo)
@@ -1113,10 +1113,10 @@ export default function AdminDashboard() {
                         value={imageUrl} 
                         onChange={e=>setImageUrl(e.target.value)} 
                         placeholder="https://ejemplo.com/imagen.jpg"
-                        className="w-full border-4 border-black p-4 rounded-3xl shadow-[6px_6px_0px_0px_#000] outline-none font-bold" 
+                        className="w-full border-2 border-black p-4 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none font-bold" 
                       />
                       {imageUrl && (
-                        <div className="mt-2 border-4 border-black rounded-2xl overflow-hidden shadow-[4px_4px_0px_0px_#000] bg-gray-50 max-w-[200px] aspect-square">
+                        <div className="mt-2 border-2 border-black rounded-2xl overflow-hidden shadow-[2px_2px_0px_0px_#000] bg-gray-50 max-w-[200px] aspect-square">
                           <img src={imageUrl} alt="Vista previa del sorteo" className="w-full h-full object-cover" />
                         </div>
                       )}
@@ -1124,7 +1124,7 @@ export default function AdminDashboard() {
 
                   <button 
                     type="submit" 
-                    className="w-full bg-red-500 text-white font-comic text-2xl py-5 rounded-4xl border-4 border-black shadow-[8px_8px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4"
+                    className="w-full bg-red-500 text-white font-comic text-lg py-5 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4"
                   >
                     ¡PUBLICAR SORTEO!
                   </button>
@@ -1133,10 +1133,10 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === 'raffles_list' && (
-          <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[12px_12px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000]">
-              <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6 uppercase">Sorteos Activos ({raffles.length})</h2>
+          <div className="bg-white border-2 border-black rounded-2xl sm:rounded-xl p-4 sm:p-4 shadow-[2px_2px_0px_0px_#000] sm:shadow-[2px_2px_0px_0px_#000]">
+              <h2 className="text-lg sm:text-xl font-comic text-black mb-6 uppercase">Sorteos Activos ({raffles.length})</h2>
               <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <table className="w-full border-2 sm:border-4 border-black text-left rounded-xl overflow-hidden min-w-[700px]">
+                  <table className="w-full border-2 sm:border-2 border-black text-left rounded-xl overflow-hidden min-w-[700px]">
                       <thead className="bg-cyan-300 font-comic text-xl border-b-4 border-black">
                           <tr>
                               <th className="p-4 border-r-4 border-black">Título</th>
@@ -1249,10 +1249,10 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === 'users' && (
-          <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000]">
-              <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6">USUARIOS REGISTRADOS ({allUsers.length})</h2>
+          <div className="bg-white border-2 border-black rounded-2xl sm:rounded-xl p-4 sm:p-4 shadow-[2px_2px_0px_0px_#000] sm:shadow-[2px_2px_0px_0px_#000]">
+              <h2 className="text-lg sm:text-xl font-comic text-black mb-6">USUARIOS REGISTRADOS ({allUsers.length})</h2>
               <div className="overflow-x-auto -mx-4 sm:mx-0">
-                  <table className="w-full border-2 sm:border-4 border-black text-left rounded-xl overflow-hidden min-w-[800px]">
+                  <table className="w-full border-2 sm:border-2 border-black text-left rounded-xl overflow-hidden min-w-[800px]">
                       <thead className="bg-cyan-300 font-comic text-xl border-b-4 border-black">
                           <tr>
                               <th className="p-4 border-r-4 border-black">Nombre Completo</th>
@@ -1310,8 +1310,8 @@ export default function AdminDashboard() {
       )}
 
       {activeTab === 'settings' && (
-          <div className="bg-white border-4 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-[6px_6px_0px_0px_#000] sm:shadow-[8px_8px_0px_0px_#000] max-w-2xl mx-auto">
-              <h2 className="text-2xl sm:text-3xl font-comic text-black mb-6">CONFIGURACIÓN DE PAGOS</h2>
+          <div className="bg-white border-2 border-black rounded-2xl sm:rounded-xl p-4 sm:p-4 shadow-[2px_2px_0px_0px_#000] sm:shadow-[2px_2px_0px_0px_#000] max-w-2xl mx-auto">
+              <h2 className="text-lg sm:text-xl font-comic text-black mb-6">CONFIGURACIÓN DE PAGOS</h2>
               
               <AnimatePresence>
                 {saveStatus !== 'idle' && (
@@ -1319,12 +1319,12 @@ export default function AdminDashboard() {
                     initial={{ opacity: 0, scale: 0.8, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                    className={`mb-6 p-6 border-4 border-black rounded-2xl flex items-center justify-center gap-4 shadow-[8px_8px_0px_0px_#000] font-black text-xl sm:text-2xl ${
+                    className={`mb-6 p-4 border-2 border-black rounded-2xl flex items-center justify-center gap-4 shadow-[2px_2px_0px_0px_#000] font-black text-xl sm:text-lg ${
                       saveStatus === 'saving' ? 'bg-blue-300' :
                       saveStatus === 'success' ? 'bg-green-400' : 'bg-red-400'
                     }`}
                   >
-                    {saveStatus === 'saving' && <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin" />}
+                    {saveStatus === 'saving' && <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />}
                     {saveStatus === 'success' && <CheckCircle className="w-10 h-10 text-black" />}
                     {saveStatus === 'error' && <XCircle className="w-10 h-10 text-black" />}
                     <span className="uppercase tracking-tight">
@@ -1349,7 +1349,7 @@ export default function AdminDashboard() {
                         }} 
                         required 
                         placeholder="Ej: Juan Pérez"
-                        className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none capitalize" 
+                        className="w-full border-2 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none capitalize" 
                       />
                   </div>
                   <div>
@@ -1360,7 +1360,7 @@ export default function AdminDashboard() {
                         onChange={e => setAppSettings({...appSettings, yapeNumber: e.target.value})} 
                         required 
                         placeholder="Ej: 987654321"
-                        className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
+                        className="w-full border-2 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
                       />
                   </div>
                   <div>
@@ -1371,7 +1371,7 @@ export default function AdminDashboard() {
                           accept="image/*"
                           onChange={handleFileUpload}
                           disabled={isUploading}
-                          className="w-full border-4 border-dashed border-black p-3 rounded-xl bg-gray-50 font-bold cursor-pointer hover:bg-gray-100 transition-colors"
+                          className="w-full border-2 border-dashed border-black p-3 rounded-xl bg-gray-50 font-bold cursor-pointer hover:bg-gray-100 transition-colors"
                         />
                         <p className="text-xs text-gray-500 font-bold uppercase">Esto guardará la imagen en /public/qrs/ y actualizará la URL automáticamente.</p>
                       </div>
@@ -1385,7 +1385,7 @@ export default function AdminDashboard() {
                         onChange={e => setAppSettings({...appSettings, yapeQrUrl: e.target.value})} 
                         required 
                         placeholder="URL de la imagen del QR"
-                        className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
+                        className="w-full border-2 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
                       />
                   </div>
                   
@@ -1397,25 +1397,25 @@ export default function AdminDashboard() {
                         onChange={e => setAppSettings({...appSettings, whatsappNumber: e.target.value})} 
                         required 
                         placeholder="Ej: 51987654321"
-                        className="w-full border-4 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
+                        className="w-full border-2 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] focus:shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 transition-all outline-none" 
                       />
                       <p className="text-xs font-bold mt-1 text-gray-500">Incluir código de país (ej: 51 para Perú)</p>
                   </div>
                   
-                  <div className="flex items-center gap-3 p-4 border-4 border-black rounded-xl bg-gray-50">
+                  <div className="flex items-center gap-3 p-4 border-2 border-black rounded-xl bg-gray-50">
                       <input 
                           type="checkbox"
                           id="autoPaymentEnabled"
                           checked={!!appSettings.autoPaymentEnabled}
                           onChange={e => setAppSettings({...appSettings, autoPaymentEnabled: e.target.checked})}
-                          className="w-6 h-6 border-4 border-black"
+                          className="w-6 h-6 border-2 border-black"
                       />
                       <label htmlFor="autoPaymentEnabled" className="font-bold cursor-pointer select-none">
                           Activar Verificación de Pago Automático (Yape)
                       </label>
                   </div>
                   
-                  <div className="border-4 border-black p-6 rounded-2xl bg-yellow-50 space-y-4 shadow-[4px_4px_0px_0px_#000]">
+                  <div className="border-2 border-black p-4 rounded-2xl bg-yellow-50 space-y-4 shadow-[2px_2px_0px_0px_#000]">
                       <h3 className="text-xl font-comic">Cinta de Anuncios (Banner Marquesina)</h3>
                       <div className="flex items-center gap-3">
                           <input 
@@ -1423,7 +1423,7 @@ export default function AdminDashboard() {
                               id="announcementEnabled"
                               checked={!!appSettings.announcementEnabled}
                               onChange={e => setAppSettings({...appSettings, announcementEnabled: e.target.checked})}
-                              className="w-6 h-6 border-4 border-black"
+                              className="w-6 h-6 border-2 border-black"
                           />
                           <label htmlFor="announcementEnabled" className="font-bold cursor-pointer select-none">
                               Activar cinta de anuncios debajo del encabezado
@@ -1438,14 +1438,14 @@ export default function AdminDashboard() {
                                   value={appSettings.announcementText || ''} 
                                   onChange={e => setAppSettings({...appSettings, announcementText: e.target.value})} 
                                   placeholder="Ej: 🎉 ¡GRAN SORTEO ESTE FIN DE SEMANA! COMPRA TUS TICKETS YA 🚀"
-                                  className="w-full border-4 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none" 
+                                  className="w-full border-2 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] outline-none" 
                               />
                           </div>
                       )}
                   </div>
                   
                   {appSettings.yapeQrUrl && (
-                      <div className="border-4 border-black p-4 rounded-2xl bg-gray-50 flex flex-col items-center">
+                      <div className="border-2 border-black p-4 rounded-2xl bg-gray-50 flex flex-col items-center">
                           <p className="font-bold mb-2 uppercase text-sm">Vista Previa QR:</p>
                           <img src={appSettings.yapeQrUrl} alt="QR Preview" className="max-w-[200px] border-2 border-black" />
                       </div>
@@ -1454,7 +1454,7 @@ export default function AdminDashboard() {
                   <button 
                     type="submit" 
                     disabled={saveStatus === 'saving'}
-                    className={`w-full text-white font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4 flex items-center justify-center gap-3 ${
+                    className={`w-full text-white font-comic text-lg py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all mt-4 flex items-center justify-center gap-3 ${
                       saveStatus === 'saving' ? 'bg-blue-400' :
                       saveStatus === 'success' ? 'bg-green-500' :
                       saveStatus === 'error' ? 'bg-red-600' : 'bg-red-400'
@@ -1462,7 +1462,7 @@ export default function AdminDashboard() {
                   >
                       {saveStatus === 'saving' ? (
                         <>
-                          <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                           <span>GUARDANDO...</span>
                         </>
                       ) : saveStatus === 'success' ? (
@@ -1485,26 +1485,26 @@ export default function AdminDashboard() {
 
       {winnerModalOpen && activeRaffleForDraw && (
         <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 backdrop-blur-sm sm:p-4">
-          <div className="flex min-h-full items-center justify-center p-2 sm:p-4 py-8 sm:py-12">
-            <div className="bg-white border-4 sm:border-8 border-black rounded-2xl sm:rounded-3xl p-4 sm:p-8 max-w-lg w-full relative shadow-[8px_8px_0px_0px_#FFD700] sm:shadow-[16px_16px_0px_0px_#FFD700]">
+          <div className="flex min-h-full items-center justify-center p-2 sm:p-4 py-4 sm:py-12">
+            <div className="bg-white border-2 sm:border-2 border-black rounded-2xl sm:rounded-xl p-4 sm:p-4 max-w-lg w-full relative shadow-[2px_2px_0px_0px_#FFD700] sm:shadow-[2px_2px_0px_0px_#FFD700]">
                 {drawState !== 'shuffling' && (
                     <button 
                         onClick={() => setWinnerModalOpen(false)}
-                        className="absolute -top-3 -right-3 sm:-top-6 sm:-right-6 bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-black text-xl sm:text-2xl font-bold hover:scale-110 transition-transform shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000]"
+                        className="absolute -top-3 -right-3 sm:-top-4 sm:-right-6 bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-2 border-black text-xl sm:text-lg font-bold hover:scale-110 transition-transform shadow-[2px_2px_0px_0px_#000] sm:shadow-[2px_2px_0px_0px_#000]"
                     >
                         X
                     </button>
                 )}
                 
-                <h2 className="text-3xl sm:text-4xl font-comic text-black text-center mb-2">SORTEO</h2>
+                <h2 className="text-xl sm:text-lg font-comic text-black text-center mb-2">SORTEO</h2>
                 <div className="flex justify-center mb-4">
-                    <div className={`px-4 py-1 border-4 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_#000] rotate-1 ${drawingPosition === 1 ? 'bg-yellow-400' : drawingPosition === 2 ? 'bg-cyan-200' : 'bg-purple-300'}`}>
+                    <div className={`px-4 py-1 border-2 border-black font-black uppercase text-sm shadow-[2px_2px_0px_0px_#000] rotate-1 ${drawingPosition === 1 ? 'bg-yellow-400' : drawingPosition === 2 ? 'bg-cyan-200' : 'bg-purple-300'}`}>
                         Dibujando para: {drawingPosition}° PUESTO
                     </div>
                 </div>
-                <h3 className="text-2xl font-bold text-center mb-8 bg-cyan-200 border-4 border-black inline-block px-4 py-2 transform -rotate-2 w-full">{activeRaffleForDraw.title}</h3>
+                <h3 className="text-lg font-bold text-center mb-4 bg-cyan-200 border-2 border-black inline-block px-4 py-2 transform -rotate-2 w-full">{activeRaffleForDraw.title}</h3>
 
-                <div className="bg-gray-100 border-4 border-black rounded-2xl p-6 relative overflow-hidden h-[24rem] shadow-inner mb-8 mt-4 flex flex-col items-center justify-center">
+                <div className="bg-gray-100 border-2 border-black rounded-2xl p-4 relative overflow-hidden h-[24rem] shadow-inner mb-4 mt-4 flex flex-col items-center justify-center">
                     {drawState === 'preview' ? (
                         <div className="w-full h-full flex flex-col">
                             <p className="font-comic text-xl text-center text-blue-600 mb-4 animate-bounce">LISTA DE PARTICIPANTES</p>
@@ -1527,7 +1527,7 @@ export default function AdminDashboard() {
                                         }}
                                     >
                                         {[...drawTickets, ...drawTickets].map((t, idx) => (
-                                            <div key={`${t.id}-${idx}`} className="flex justify-between items-center bg-white border-2 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_#000] mx-1">
+                                            <div key={`${t.id}-${idx}`} className="flex justify-between items-center bg-white border-2 border-black p-3 rounded-xl shadow-[2px_2px_0px_0px_#000] mx-1">
                                                 <span className="font-bold text-gray-800 text-sm sm:text-base">{protectedName(t.userName)}</span>
                                                 <span className="font-mono bg-yellow-200 px-2 border border-black rounded font-black text-sm sm:text-base">#{t.ticketNumber}</span>
                                             </div>
@@ -1540,7 +1540,7 @@ export default function AdminDashboard() {
                             <button 
                                 onClick={() => setDrawState('setup')}
                                 disabled={drawTickets.length === 0}
-                                className="mt-4 bg-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-y-1 transition-all"
+                                className="mt-4 bg-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-y-1 transition-all"
                             >
                                 CONTINUAR AL SORTEO
                             </button>
@@ -1557,7 +1557,7 @@ export default function AdminDashboard() {
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 sm:-translate-y-4 w-6 h-6 sm:w-8 sm:h-8 bg-red-600 rotate-45 border-r-4 border-b-4 border-black z-20 shadow-[2px_2px_0px_#000]"></div>
                                 
                                 <motion.div 
-                                    className="w-full h-full rounded-full border-8 border-black shadow-[8px_8px_0px_0px_#000] relative overflow-hidden"
+                                    className="w-full h-full rounded-full border-2 border-black shadow-[2px_2px_0px_0px_#000] relative overflow-hidden"
                                     style={{
                                         background: 'conic-gradient(#fcd34d 0deg 60deg, #ec4899 60deg 120deg, #3b82f6 120deg 180deg, #22c55e 180deg 240deg, #a855f7 240deg 300deg, #f97316 300deg 360deg)'
                                     }}
@@ -1573,7 +1573,7 @@ export default function AdminDashboard() {
                                     </div>
                                 </motion.div>
                                 
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full border-4 border-black z-10 flex items-center justify-center shadow-[inset_2px_2px_0px_#d1d5db]">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full border-2 border-black z-10 flex items-center justify-center shadow-[inset_2px_2px_0px_#d1d5db]">
                                     <div className="w-4 h-4 rounded-full bg-black"></div>
                                 </div>
                             </div>
@@ -1581,7 +1581,7 @@ export default function AdminDashboard() {
                             <p className="font-bold text-lg mb-2 text-center max-w-[90%] break-words">
                                 {drawState === 'winner' ? '¡TENEMOS GANADOR!' : drawState === 'eliminated' ? '¡SE FUE AL AGUA! 💦' : `INTENTO #${currentAttempt}`}
                             </p>
-                            <div className={`font-comic text-4xl sm:text-6xl px-4 sm:px-6 py-2 border-4 border-black inline-block shadow-[4px_4px_0px_0px_#000] ${drawState === 'winner' ? 'bg-yellow-400 text-black rotate-3 animate-bounce' : drawState === 'eliminated' ? 'bg-red-500 text-white -rotate-2' : 'bg-white text-black'}`}>
+                            <div className={`font-comic text-lg sm:text-lg px-4 sm:px-4 py-2 border-2 border-black inline-block shadow-[2px_2px_0px_0px_#000] ${drawState === 'winner' ? 'bg-yellow-400 text-black rotate-3 animate-bounce' : drawState === 'eliminated' ? 'bg-red-500 text-white -rotate-2' : 'bg-white text-black'}`}>
                                 #{currentDisplayTicket?.ticketNumber || '00000'}
                             </div>
                             
@@ -1604,7 +1604,7 @@ export default function AdminDashboard() {
                                 <button 
                                     onClick={() => setDrawingPosition(1)}
                                     disabled={activeRaffleForDraw.winners?.some((w: any) => w.position === 1)}
-                                    className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 1 ? 'bg-yellow-400' : 'bg-white'}`}
+                                    className={`flex-1 py-3 border-2 border-black rounded-xl font-bold transition-all shadow-[2px_2px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 1 ? 'bg-yellow-400' : 'bg-white'}`}
                                 >
                                     1° Lugar
                                 </button>
@@ -1612,7 +1612,7 @@ export default function AdminDashboard() {
                                     <button 
                                         onClick={() => setDrawingPosition(2)}
                                         disabled={activeRaffleForDraw.winners?.some((w: any) => w.position === 2)}
-                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 2 ? 'bg-cyan-200' : 'bg-white'}`}
+                                        className={`flex-1 py-3 border-2 border-black rounded-xl font-bold transition-all shadow-[2px_2px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 2 ? 'bg-cyan-200' : 'bg-white'}`}
                                     >
                                         2° Lugar
                                     </button>
@@ -1621,7 +1621,7 @@ export default function AdminDashboard() {
                                     <button 
                                         onClick={() => setDrawingPosition(3)}
                                         disabled={activeRaffleForDraw.winners?.some((w: any) => w.position === 3)}
-                                        className={`flex-1 py-3 border-4 border-black rounded-xl font-bold transition-all shadow-[4px_4px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 3 ? 'bg-purple-300' : 'bg-white'}`}
+                                        className={`flex-1 py-3 border-2 border-black rounded-xl font-bold transition-all shadow-[2px_2px_0px_0px_#000] disabled:opacity-30 disabled:cursor-not-allowed ${drawingPosition === 3 ? 'bg-purple-300' : 'bg-white'}`}
                                     >
                                         3° Lugar
                                     </button>
@@ -1634,18 +1634,18 @@ export default function AdminDashboard() {
 
                         <label className="font-bold mb-2 block text-lg">El ganador será el ticket sacado al intento nº:</label>
                         <div className="flex gap-4 justify-center items-center mb-4">
-                            <input type="number" min="1" max={drawTickets.length} value={attemptTarget} onChange={e => setAttemptTarget(Number(e.target.value))} className="border-4 border-black p-2 font-comic text-2xl w-24 text-center rounded-xl shadow-[4px_4px_0px_#000]" />
+                            <input type="number" min="1" max={drawTickets.length} value={attemptTarget} onChange={e => setAttemptTarget(Number(e.target.value))} className="border-2 border-black p-2 font-comic text-lg w-24 text-center rounded-xl shadow-[2px_2px_0px_#000]" />
                         </div>
                         <div className="flex justify-center flex-wrap gap-2 mb-6">
                             {[1, 2, 3].map(n => (
-                                <button key={n} disabled={drawTickets.length < n} onClick={() => setAttemptTarget(n)} className={`px-4 py-2 border-4 border-black font-bold rounded-xl shadow-[2px_2px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 ${attemptTarget===n?'bg-yellow-400':'bg-white'}`}>A la {n}ª</button>
+                                <button key={n} disabled={drawTickets.length < n} onClick={() => setAttemptTarget(n)} className={`px-4 py-2 border-2 border-black font-bold rounded-xl shadow-[2px_2px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 ${attemptTarget===n?'bg-yellow-400':'bg-white'}`}>A la {n}ª</button>
                             ))}
-                            <button disabled={drawTickets.length === 0} onClick={() => setAttemptTarget(drawTickets.length)} className={`px-4 py-2 border-4 border-black font-bold rounded-xl shadow-[2px_2px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 ${attemptTarget===drawTickets.length?'bg-yellow-400':'bg-white'}`}>Último ({drawTickets.length})</button>
+                            <button disabled={drawTickets.length === 0} onClick={() => setAttemptTarget(drawTickets.length)} className={`px-4 py-2 border-2 border-black font-bold rounded-xl shadow-[2px_2px_0px_#000] hover:translate-y-0.5 hover:shadow-none transition-all disabled:opacity-50 ${attemptTarget===drawTickets.length?'bg-yellow-400':'bg-white'}`}>Último ({drawTickets.length})</button>
                         </div>
                         <button 
                             onClick={() => { setDrawState('idle'); }}
                             disabled={drawTickets.length === 0}
-                            className={`w-full font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all ${drawTickets.length === 0 ? 'bg-gray-400 text-gray-700 cursor-not-allowed' : 'bg-cyan-400 text-black hover:bg-cyan-500'}`}
+                            className={`w-full font-comic text-lg py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all ${drawTickets.length === 0 ? 'bg-gray-400 text-gray-700 cursor-not-allowed' : 'bg-cyan-400 text-black hover:bg-cyan-500'}`}
                         >
                             {drawTickets.length === 0 ? 'NO HAY TICKETS VÁLIDOS' : 'CONFIGURAR'}
                         </button>
@@ -1655,7 +1655,7 @@ export default function AdminDashboard() {
                 {drawState === 'idle' && (
                     <button 
                         onClick={handleStartDraw}
-                        className={`w-full font-comic text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all bg-green-400 text-black hover:bg-green-500`}
+                        className={`w-full font-comic text-lg py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all bg-green-400 text-black hover:bg-green-500`}
                     >
                         ¡INICIAR RULETA! 🎰
                     </button>
@@ -1665,7 +1665,7 @@ export default function AdminDashboard() {
                     <div className="flex gap-4">
                         <button 
                             onClick={handleNextAttempt}
-                            className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 font-comic text-xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                            className="flex-1 bg-yellow-400 text-black hover:bg-yellow-500 font-comic text-xl py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
                         >
                             Intento {currentAttempt + 1}
                         </button>
@@ -1674,7 +1674,7 @@ export default function AdminDashboard() {
                                 setAutoMode(!autoMode);
                                 if (!autoMode) handleNextAttempt();
                             }}
-                            className={`px-6 font-bold py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all ${autoMode ? 'bg-purple-500 text-white' : 'bg-purple-300 text-black'}`}
+                            className={`px-4 font-bold py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all ${autoMode ? 'bg-purple-500 text-white' : 'bg-purple-300 text-black'}`}
                         >
                             Auto {autoMode ? 'ON' : 'OFF'}
                         </button>
@@ -1682,7 +1682,7 @@ export default function AdminDashboard() {
                 )}
 
                 {drawState === 'shuffling' && (
-                    <div className="w-full bg-yellow-400 text-black font-comic text-2xl py-4 rounded-xl border-4 border-black text-center animate-pulse">
+                    <div className="w-full bg-yellow-400 text-black font-comic text-lg py-4 rounded-xl border-2 border-black text-center animate-pulse">
                         GIRANDO...
                     </div>
                 )}
@@ -1693,7 +1693,7 @@ export default function AdminDashboard() {
                             href={`https://wa.me/${currentDisplayTicket?.userPhone?.replace(/\D/g,'')}?text=${encodeURIComponent(`¡Felicidades ${currentDisplayTicket?.userName}! Eres el ganador del ${drawingPosition}° PUESTO en el sorteo "${activeRaffleForDraw?.title}" con tu ticket #${currentDisplayTicket?.ticketNumber}.`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-full bg-green-500 text-white font-comic text-xl sm:text-2xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all text-center flex justify-center items-center gap-2"
+                            className="w-full bg-green-500 text-white font-comic text-xl sm:text-lg py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all text-center flex justify-center items-center gap-2"
                         >
                             <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8" />
                             ENVIAR WHATSAPP
@@ -1705,14 +1705,14 @@ export default function AdminDashboard() {
                                     setCurrentAttempt(1);
                                     setDrawingPosition(drawingPosition === 3 ? 2 : 1);
                                 }}
-                                className="w-full bg-yellow-400 text-black hover:bg-yellow-500 font-comic text-xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
+                                className="w-full bg-yellow-400 text-black hover:bg-yellow-500 font-comic text-xl py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
                             >
                                 Pasar al siguiente sorteo ({drawingPosition === 3 ? '2°' : '1°'} lugar)
                             </button>
                         ) : (
                             <button 
                                 onClick={() => setWinnerModalOpen(false)}
-                                className="w-full bg-cyan-400 text-black hover:bg-cyan-500 font-comic text-xl py-4 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                                className="w-full bg-cyan-400 text-black hover:bg-cyan-500 font-comic text-xl py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
                             >
                                 FINALIZAR
                             </button>
@@ -1732,25 +1732,25 @@ export default function AdminDashboard() {
                     initial={{ scale: 0.9, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
-                    className={`bg-white border-4 sm:border-8 border-black rounded-2xl sm:rounded-[3rem] p-4 sm:p-8 max-w-2xl w-full relative shadow-[8px_8px_0px_0px_#000] sm:shadow-[16px_16px_0px_0px_#000] ${selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) ? 'border-red-600' : ''}`}
+                    className={`bg-white border-2 sm:border-2 border-black rounded-2xl sm:rounded-2xl p-4 sm:p-4 max-w-2xl w-full relative shadow-[2px_2px_0px_0px_#000] sm:shadow-[2px_2px_0px_0px_#000] ${selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) ? 'border-red-600' : ''}`}
                 >
                     <button 
                         onClick={() => setSelectedGroupId(null)}
-                        className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-black text-xl sm:text-2xl font-bold flex items-center justify-center hover:scale-110 transition-transform shadow-[2px_2px_0px_0px_#000] sm:shadow-[4px_4px_0px_0px_#000]"
+                        className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 bg-red-500 text-white w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 sm:border-2 border-black text-xl sm:text-lg font-bold flex items-center justify-center hover:scale-110 transition-transform shadow-[2px_2px_0px_0px_#000] sm:shadow-[2px_2px_0px_0px_#000]"
                     >
                         X
                     </button>
 
                     <div className="mb-4 sm:mb-6">
                         <div className="flex justify-between items-start mb-2">
-                            <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none">Orden</h2>
+                            <h2 className="text-lg sm:text-xl font-comic text-black uppercase leading-none">Orden</h2>
                             {selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) && (
                                 <span className="bg-red-600 text-white px-3 py-1 rounded-full font-black text-xs animate-pulse border-2 border-black shadow-[2px_2px_0px_0px_#000]">
                                     TIEMPO AGOTADO
                                 </span>
                             )}
                         </div>
-                        <div className={`border-4 border-black p-4 rounded-2xl flex flex-col sm:flex-row justify-between gap-4 ${selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) ? 'bg-red-100' : 'bg-yellow-100'}`}>
+                        <div className={`border-2 border-black p-4 rounded-2xl flex flex-col sm:flex-row justify-between gap-4 ${selectedGroup.createdAt && (now - selectedGroup.createdAt >= 3600000) ? 'bg-red-100' : 'bg-yellow-100'}`}>
                             <div>
                                 <p className="font-black text-xl">{selectedGroup.userName}</p>
                                 <p className="text-gray-600 font-bold">{selectedGroup.raffleTitle}</p>
@@ -1764,7 +1764,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className="bg-gray-100 border-4 border-black rounded-2xl p-6 mb-8 max-h-[300px] overflow-y-auto custom-scrollbar">
+                    <div className="bg-gray-100 border-2 border-black rounded-2xl p-4 mb-4 max-h-[300px] overflow-y-auto custom-scrollbar">
                         <p className="font-bold text-gray-500 mb-4 uppercase text-sm">Tickets en esta orden ({selectedGroup.tickets.length}):</p>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {selectedGroup.tickets.map((t: any) => (
@@ -1792,7 +1792,7 @@ export default function AdminDashboard() {
                         <button 
                             disabled={isApprovingAll}
                             onClick={() => handleApproveAllInGroup(selectedGroup)}
-                            className="flex-grow bg-green-500 text-white font-comic text-2xl py-4 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            className="flex-grow bg-green-500 text-white font-comic text-lg py-4 rounded-2xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                         >
                             {isApprovingAll ? 'APROBANDO...' : (
                                 <>
@@ -1813,7 +1813,7 @@ export default function AdminDashboard() {
                                         console.error(e);
                                     }
                                 }}
-                                className="bg-yellow-400 text-black p-4 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center"
+                                className="bg-yellow-400 text-black p-4 rounded-2xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center"
                                 title="Reiniciar tiempo de toda la orden"
                             >
                                 <RotateCcw className="w-8 h-8" />
@@ -1833,23 +1833,23 @@ export default function AdminDashboard() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white border-4 sm:border-8 border-black rounded-3xl p-4 sm:p-8 max-w-3xl w-full relative shadow-[12px_12px_0px_0px_#000] max-h-[90vh] flex flex-col"
+              className="bg-white border-2 sm:border-2 border-black rounded-xl p-4 sm:p-4 max-w-3xl w-full relative shadow-[2px_2px_0px_0px_#000] max-h-[90vh] flex flex-col"
             >
               <button 
                 onClick={() => setParticipantsModalOpen(false)}
-                className="absolute -top-3 -right-3 bg-red-500 text-white w-10 h-10 rounded-full border-4 border-black font-bold flex items-center justify-center hover:scale-110 transition-transform shadow-[4px_4px_0px_0px_#000]"
+                className="absolute -top-3 -right-3 bg-red-500 text-white w-10 h-10 rounded-full border-2 border-black font-bold flex items-center justify-center hover:scale-110 transition-transform shadow-[2px_2px_0px_0px_#000]"
               >
                 X
               </button>
 
               <div className="mb-6">
-                <h2 className="text-2xl sm:text-3xl font-comic text-black uppercase leading-none mb-2">Participantes</h2>
+                <h2 className="text-lg sm:text-xl font-comic text-black uppercase leading-none mb-2">Participantes</h2>
                 <p className="font-bold text-cyan-600 bg-cyan-50 border-2 border-black px-3 py-1 rounded-xl inline-block">{selectedRaffleForParticipants.title}</p>
               </div>
 
               {isLoadingParticipants ? (
                 <div className="flex-grow flex items-center justify-center py-20">
-                  <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-12 h-12 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
                 <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar space-y-4">
@@ -1858,7 +1858,7 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="grid grid-cols-1 gap-3">
                       {participants.map((p, idx) => (
-                        <div key={idx} className="bg-gray-50 border-2 border-black p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[4px_4px_0px_0px_#000]">
+                        <div key={idx} className="bg-gray-50 border-2 border-black p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[2px_2px_0px_0px_#000]">
                           <div>
                             <p className="font-black text-lg text-black uppercase">{p.userName}</p>
                             <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
@@ -1882,7 +1882,7 @@ export default function AdminDashboard() {
                   <p className="font-black text-lg uppercase">Total: {participants.length} Usuarios</p>
                   <button 
                     onClick={() => setParticipantsModalOpen(false)}
-                    className="bg-black text-white px-6 py-2 rounded-xl border-2 border-black font-bold shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
+                    className="bg-black text-white px-4 py-2 rounded-xl border-2 border-black font-bold shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
                   >
                     Cerrar
                   </button>
@@ -1916,21 +1916,21 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, scale: 0.5, y: -100 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.5, y: -100 }}
-            className={`fixed top-10 left-1/2 -translate-x-1/2 z-[999] px-10 py-6 border-8 border-black rounded-[2rem] shadow-[12px_12px_0px_0px_#000] flex flex-col items-center gap-4 text-center ${
+            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[999] px-10 py-3 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] flex flex-col items-center gap-4 text-center ${
               saveStatus === 'success' ? 'bg-green-400' : 'bg-red-400'
             }`}
           >
             {saveStatus === 'success' ? (
-              <div className="bg-white p-4 rounded-full border-4 border-black">
+              <div className="bg-white p-4 rounded-full border-2 border-black">
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
             ) : (
-              <div className="bg-white p-4 rounded-full border-4 border-black">
+              <div className="bg-white p-4 rounded-full border-2 border-black">
                 <XCircle className="w-12 h-12 text-red-600" />
               </div>
             )}
             <div>
-              <h3 className="text-3xl font-black uppercase text-black">
+              <h3 className="text-xl font-black uppercase text-black">
                 {saveStatus === 'success' ? '¡ÉXITO!' : '¡ERROR!'}
               </h3>
               <p className="text-xl font-bold text-black/80">
@@ -1974,23 +1974,23 @@ function PostponeModal({ raffle, onClose, onUpdated }: { raffle: any, onClose: (
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white border-8 border-black rounded-[2rem] p-8 max-w-md w-full relative shadow-[16px_16px_0px_0px_#a855f7]"
+                className="bg-white border-2 border-black rounded-xl p-4 max-w-md w-full relative shadow-[2px_2px_0px_0px_#a855f7]"
             >
-                <button onClick={onClose} className="absolute -top-6 -right-6 bg-red-500 text-white w-12 h-12 rounded-full border-4 border-black text-2xl font-bold shadow-[4px_4px_0px_0px_#000]">X</button>
+                <button onClick={onClose} className="absolute -top-4 -right-6 bg-red-500 text-white w-12 h-12 rounded-full border-2 border-black text-lg font-bold shadow-[2px_2px_0px_0px_#000]">X</button>
                 
-                <h2 className="text-3xl font-comic text-black mb-6 uppercase">APLAZAR SORTEO</h2>
+                <h2 className="text-xl font-comic text-black mb-6 uppercase">APLAZAR SORTEO</h2>
                 <p className="font-bold text-gray-500 mb-6 bg-gray-100 p-3 border-2 border-black rounded-xl">
                     {raffle.title}
                 </p>
 
-                <div className="space-y-4 mb-8">
+                <div className="space-y-4 mb-4">
                     <div className="space-y-1">
                         <label className="block text-sm font-black ml-2 uppercase">Nueva Fecha</label>
                         <input 
                             type="date" 
                             value={date}
                             onChange={e => setDate(e.target.value)}
-                            className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                            className="w-full border-2 border-black p-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
                         />
                     </div>
                     <div className="space-y-1">
@@ -1999,7 +1999,7 @@ function PostponeModal({ raffle, onClose, onUpdated }: { raffle: any, onClose: (
                             type="time" 
                             value={time}
                             onChange={e => setTime(e.target.value)}
-                            className="w-full border-4 border-black p-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                            className="w-full border-2 border-black p-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
                         />
                     </div>
                 </div>
@@ -2007,14 +2007,14 @@ function PostponeModal({ raffle, onClose, onUpdated }: { raffle: any, onClose: (
                 <div className="flex gap-4">
                     <button 
                         onClick={onClose}
-                        className="flex-1 border-4 border-black font-bold py-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
+                        className="flex-1 border-2 border-black font-bold py-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase"
                     >
                         Cancelar
                     </button>
                     <button 
                         onClick={handleSave}
                         disabled={saving}
-                        className="flex-1 bg-purple-500 text-white border-4 border-black font-bold py-4 rounded-2xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase disabled:opacity-50"
+                        className="flex-1 bg-purple-500 text-white border-2 border-black font-bold py-4 rounded-2xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all uppercase disabled:opacity-50"
                     >
                         {saving ? 'Guardando...' : 'Confirmar'}
                     </button>

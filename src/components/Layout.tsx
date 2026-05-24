@@ -153,16 +153,16 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col font-sans text-black">
       <ProfileCompletionModal />
       <header className="bg-yellow-400 shadow-sm border-b-4 border-black sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-2 sm:py-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-4 lg:px-4">
+          <div className="flex justify-between items-center py-2 sm:py-3">
             <Link to="/" className="flex items-center group">
-              <img src="/logo-v2.png" alt="Premios Facilito" className="h-12 sm:h-16 w-auto object-contain hover:scale-105 transition-transform" />
+              <img src="/logo-v3.png" alt="Premios Facilito" className="h-10 sm:h-12 w-auto object-contain hover:scale-105 transition-transform" />
             </Link>
 
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/sorteos" className="text-black font-bold text-lg hover:text-red-500 hover:-translate-y-1 transition-transform">Sorteos Activos</Link>
-              <Link to="/resultados" className="text-black font-bold text-lg hover:text-red-500 hover:-translate-y-1 transition-transform">Resultados</Link>
-              <a href="/como-funciona" onClick={handleScrollToHowItWorks} className="text-black font-bold text-lg hover:text-red-500 hover:-translate-y-1 transition-transform cursor-pointer">Cómo Funciona</a>
+            <nav className="hidden md:flex space-x-6">
+              <Link to="/sorteos" className="text-black font-bold text-base hover:text-red-500 hover:-translate-y-1 transition-transform">Sorteos Activos</Link>
+              <Link to="/resultados" className="text-black font-bold text-base hover:text-red-500 hover:-translate-y-1 transition-transform">Resultados</Link>
+              <a href="/como-funciona" onClick={handleScrollToHowItWorks} className="text-black font-bold text-base hover:text-red-500 hover:-translate-y-1 transition-transform cursor-pointer">Cómo Funciona</a>
             </nav>
 
             <div className="hidden md:flex items-center space-x-4">
@@ -179,7 +179,7 @@ export default function Layout() {
                   <div className="relative group/notif">
                     <button 
                       onClick={() => setShowNotifPanel(!showNotifPanel)}
-                      className={`p-2 border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all ${filteredNotifications.length > 0 ? 'bg-orange-400' : 'bg-white'}`}
+                      className={`p-2 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all ${filteredNotifications.length > 0 ? 'bg-orange-400' : 'bg-white'}`}
                     >
                       <Bell className={`w-5 h-5 ${filteredNotifications.length > 0 ? 'animate-bounce' : ''}`} />
                       {filteredNotifications.length > 0 && (
@@ -190,7 +190,7 @@ export default function Layout() {
                     </button>
                     
                     {showNotifPanel && notifications.length > 0 && (
-                      <div className="absolute right-0 mt-4 w-72 bg-white border-4 border-black rounded-2xl shadow-[8px_8px_0px_0px_#000] p-4 z-[60]">
+                      <div className="absolute right-0 mt-4 w-72 bg-white border-2 border-black rounded-2xl shadow-[2px_2px_0px_0px_#000] p-4 z-[60]">
                         <div className="flex justify-between items-center border-b-2 border-black mb-2 pb-1">
                            <h4 className="font-comic text-lg">Notificaciones</h4>
                            <button 
@@ -218,18 +218,18 @@ export default function Layout() {
                     )}
                   </div>
 
-                  <Link to="/panel" className="flex items-center space-x-2 text-black bg-white border-4 border-black px-4 py-2 rounded-xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000] transition-all">
-                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} alt="Avatar" className="w-6 h-6 rounded-full border-2 border-black" />
-                    <span className="font-bold">Mi Panel</span>
+                  <Link to="/panel" className="flex items-center space-x-2 text-black bg-white border-2 border-black px-3 py-1.5 rounded-lg shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all">
+                    <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} alt="Avatar" className="w-5 h-5 rounded-full border border-black" />
+                    <span className="font-bold text-sm">Mi Panel</span>
                   </Link>
-                  <button onClick={handleLogout} className="bg-red-500 text-white p-2 border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000] transition-all">
-                    <LogOut className="w-5 h-5" />
+                  <button onClick={handleLogout} className="bg-red-500 text-white p-1.5 border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all">
+                    <LogOut className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
                 <button 
                   onClick={handleLogin}
-                  className="flex items-center justify-center space-x-2 bg-red-500 text-white border-4 border-black px-6 py-2 rounded-xl font-bold text-lg shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000] transition-all"
+                  className="flex items-center justify-center space-x-2 bg-red-500 text-white border-2 border-black px-4 py-1.5 rounded-lg font-bold text-sm shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none transition-all"
                 >
                   <LogIn className="w-5 h-5" />
                   <span>¡Ingresar!</span>
@@ -238,7 +238,7 @@ export default function Layout() {
             </div>
 
             <div className="md:hidden flex items-center">
-              <button onClick={() => setMenuOpen(!menuOpen)} className="bg-white p-2 border-4 border-black rounded-xl shadow-[4px_4px_0px_0px_#000]">
+              <button onClick={() => setMenuOpen(!menuOpen)} className="bg-white p-2 border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000]">
                 <Menu className="w-6 h-6 text-black" />
               </button>
             </div>
@@ -247,15 +247,15 @@ export default function Layout() {
         
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden border-b-4 border-black bg-yellow-300 absolute w-full shadow-[0px_8px_0px_0px_#000] z-40">
+          <div className="md:hidden border-b-4 border-black bg-yellow-300 absolute w-full shadow-[0px_4px_0px_0px_#000] z-40">
             <div className="px-4 pt-4 pb-6 space-y-3">
-              <Link to="/sorteos" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl border-4 border-black bg-white font-bold text-black shadow-[4px_4px_0px_0px_#000]">Sorteos Activos</Link>
-              <Link to="/resultados" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl border-4 border-black bg-white font-bold text-black shadow-[4px_4px_0px_0px_#000]">Resultados</Link>
-              <a href="/como-funciona" onClick={handleScrollToHowItWorks} className="block px-4 py-3 rounded-xl border-4 border-black bg-white font-bold text-black shadow-[4px_4px_0px_0px_#000] cursor-pointer">Cómo Funciona</a>
+              <Link to="/sorteos" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-lg border-2 border-black bg-white font-bold text-black shadow-[2px_2px_0px_0px_#000]">Sorteos Activos</Link>
+              <Link to="/resultados" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-lg border-2 border-black bg-white font-bold text-black shadow-[2px_2px_0px_0px_#000]">Resultados</Link>
+              <a href="/como-funciona" onClick={handleScrollToHowItWorks} className="block px-3 py-2 rounded-lg border-2 border-black bg-white font-bold text-black shadow-[2px_2px_0px_0px_#000] cursor-pointer">Cómo Funciona</a>
               
               {user ? (
                 <>
-                  <Link to="/panel" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl border-4 border-black bg-cyan-300 font-bold text-black shadow-[4px_4px_0px_0px_#000] flex justify-between items-center">
+                  <Link to="/panel" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-lg border-2 border-black bg-cyan-300 font-bold text-black shadow-[2px_2px_0px_0px_#000] flex justify-between items-center">
                     <span>Mi Panel</span>
                     {filteredNotifications.length > 0 && (
                       <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full border-2 border-black">
@@ -264,12 +264,12 @@ export default function Layout() {
                     )}
                   </Link>
                   {(dbUser?.role === 'admin' || dbUser?.role === 'support') && (
-                    <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-xl border-4 border-black bg-orange-300 font-bold text-black shadow-[4px_4px_0px_0px_#000]">Admin Panel</Link>
+                    <Link to="/admin" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-lg border-2 border-black bg-orange-300 font-bold text-black shadow-[2px_2px_0px_0px_#000]">Admin Panel</Link>
                   )}
-                  <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="w-full text-left block px-4 py-3 rounded-xl border-4 border-black bg-red-500 font-bold text-white shadow-[4px_4px_0px_0px_#000]">Cerrar Sesión</button>
+                  <button onClick={() => { handleLogout(); setMenuOpen(false); }} className="w-full text-left block px-3 py-2 rounded-lg border-2 border-black bg-red-500 font-bold text-white shadow-[2px_2px_0px_0px_#000]">Cerrar Sesión</button>
                 </>
               ) : (
-                <button onClick={() => { handleLogin(); setMenuOpen(false); }} className="w-full text-left block px-4 py-3 rounded-xl border-4 border-black bg-red-500 font-bold text-white shadow-[4px_4px_0px_0px_#000]">¡Ingresar / Registro!</button>
+                <button onClick={() => { handleLogin(); setMenuOpen(false); }} className="w-full text-left block px-3 py-2 rounded-lg border-2 border-black bg-red-500 font-bold text-white shadow-[2px_2px_0px_0px_#000]">¡Ingresar / Registro!</button>
               )}
             </div>
           </div>
@@ -281,7 +281,7 @@ export default function Layout() {
           <div className="flex whitespace-nowrap animate-ticker w-max">
             {/* We duplicate the text to create a seamless infinite loop */}
             {[...Array(10)].map((_, i) => (
-              <span key={i} className="px-8 text-sm sm:text-lg uppercase flex items-center space-x-4">
+              <span key={i} className="px-4 text-sm sm:text-lg uppercase flex items-center space-x-4">
                 <span>{settings.announcementText}</span>
                 <span className="text-yellow-300 px-4">⚡</span>
               </span>
@@ -294,11 +294,11 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      <footer className="bg-cyan-400 text-black border-t-8 border-black mt-auto py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <footer className="bg-cyan-400 text-black border-t-8 border-black mt-auto py-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-4 lg:px-4 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-4">
             <div className="flex items-center">
-              <img src="/logo-v2.png" alt="Premios Facilito" className="w-40 h-20 object-contain" />
+              <img src="/logo-v3.png" alt="Premios Facilito" className="w-40 h-20 object-contain" />
             </div>
             <p className="text-black font-bold text-sm">La plataforma de sorteos más transparente del Perú. ¡Participa desde S/1 y gana!</p>
           </div>
@@ -326,7 +326,7 @@ export default function Layout() {
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 mt-8 pt-8 border-t-4 border-black text-center font-bold text-black">
+        <div className="max-w-4xl mx-auto px-4 mt-6 pt-6 border-t-4 border-black text-center font-bold text-black text-sm">
           © {new Date().getFullYear()} Premios Facilito. Todos los derechos reservados.
         </div>
       </footer>

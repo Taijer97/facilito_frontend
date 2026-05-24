@@ -122,34 +122,34 @@ export default function UserDashboard() {
     window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodedMessage}`, '_blank');
   };
 
-  if (loading || fetching) return <div className="p-20 text-center font-comic text-2xl">CARGANDO TU PANEL...</div>;
-  if (!user) return <div className="p-20 text-center font-comic text-2xl text-red-500">DEBES INICIAR SESIÓN PARA VER TU PANEL.</div>;
+  if (loading || fetching) return <div className="p-20 text-center font-comic text-lg">CARGANDO TU PANEL...</div>;
+  if (!user) return <div className="p-20 text-center font-comic text-lg text-red-500">DEBES INICIAR SESIÓN PARA VER TU PANEL.</div>;
 
   const referralBaseUrl = import.meta.env.VITE_REFERRAL_BASE_URL || window.location.origin;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-4xl mx-auto px-4 sm:px-4 lg:px-4 py-4 md:py-12">
         <button 
             onClick={() => setShowEditProfile(true)}
             className="w-full text-left group transition-transform hover:scale-[1.01] active:scale-100"
         >
-            <div className="bg-white border-4 border-black rounded-3xl p-8 flex items-center space-x-6 mb-12 shadow-[8px_8px_0px_0px_#000] transform -rotate-1 group-hover:bg-yellow-50">
+            <div className="bg-white border-2 border-black rounded-2xl p-4 md:p-4 flex items-center space-x-4 mb-4 shadow-[2px_2px_0px_0px_#000] transform -rotate-1 group-hover:bg-yellow-50">
                 <div className="relative">
                     <img 
                     src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} 
                     alt="Perfil" 
-                    className="w-24 h-24 rounded-full border-4 border-black shadow-[4px_4px_0px_0px_#000]"
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-black shadow-[2px_2px_0px_0px_#000]"
                     />
-                    <div className="absolute -bottom-1 -right-1 bg-black text-white p-2 rounded-full border-2 border-white shadow-sm">
-                        <UserIcon className="w-4 h-4" />
+                    <div className="absolute -bottom-1 -right-1 bg-black text-white p-1.5 rounded-full border-2 border-white shadow-sm">
+                        <UserIcon className="w-3 h-3 md:w-4 md:h-4" />
                     </div>
                 </div>
                 <div>
-                    <h1 className="text-4xl font-comic text-black drop-shadow-[2px_2px_0px_#fff] flex items-center gap-3">
+                    <h1 className="text-xl md:text-lg font-comic text-black drop-shadow-[1px_1px_0px_#fff] flex items-center gap-2">
                         ¡HOLA, {dbUser?.name?.split(' ')[0] || user.displayName?.split(' ')[0] || 'USUARIO'}!
-                        <span className="text-sm bg-black text-white px-2 py-0.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity font-bold uppercase">Editar Perfil</span>
+                        <span className="text-[10px] md:text-xs bg-black text-white px-2 py-0.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity font-bold uppercase">Editar Perfil</span>
                     </h1>
-                    <p className="font-bold text-gray-600 bg-yellow-200 inline-block px-3 py-1 border-2 border-black rounded-xl mt-2 shadow-[2px_2px_0px_0px_#000] transform rotate-1 mr-4">{user.email}</p>
+                    <p className="font-bold text-gray-600 bg-yellow-200 inline-block px-2 py-0.5 border-2 border-black rounded-lg mt-1 shadow-[1px_1px_0px_0px_#000] transform rotate-1 mr-4 text-xs md:text-sm">{user.email}</p>
                 </div>
             </div>
         </button>
@@ -160,42 +160,42 @@ export default function UserDashboard() {
             )}
         </AnimatePresence>
 
-        <div className="mb-8">
-            <h2 className="text-4xl font-comic text-black inline-block bg-cyan-400 border-4 border-black px-6 py-2 shadow-[8px_8px_0px_0px_#000] rotate-1 mb-8">MIS TICKETS</h2>
+        <div className="mb-6">
+            <h2 className="text-xl md:text-xl font-comic text-black inline-block bg-cyan-400 border-2 border-black px-4 py-1.5 shadow-[2px_2px_0px_0px_#000] rotate-1 mb-6">MIS TICKETS</h2>
             
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3">
                 <button 
                   onClick={() => setActiveTab('pending')}
-                  className={`px-6 py-3 font-comic text-lg border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'pending' ? 'bg-yellow-300' : 'bg-white'}`}
+                  className={`px-4 py-2 font-comic text-xs md:text-sm border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'pending' ? 'bg-yellow-300' : 'bg-white'}`}
                 >
-                  <span className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" /> 
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-4 h-4" /> 
                     PENDIENTES ({tickets.filter(t => t.status === 'pending_payment' || t.status === 'rejected').length})
                   </span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('participating')}
-                  className={`px-6 py-3 font-comic text-lg border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'participating' ? 'bg-green-400' : 'bg-white'}`}
+                  className={`px-4 py-2 font-comic text-xs md:text-sm border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'participating' ? 'bg-green-400' : 'bg-white'}`}
                 >
-                  <span className="flex items-center gap-2">
-                    <TicketIcon className="w-5 h-5" /> 
+                  <span className="flex items-center gap-1">
+                    <TicketIcon className="w-4 h-4" /> 
                     ¡PARTICIPANDO! ({tickets.filter(t => t.status === 'paid').length})
                   </span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('winner')}
-                  className={`px-6 py-3 font-comic text-lg border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'winner' ? 'bg-cyan-400 animate-pulse' : 'bg-white'}`}
+                  className={`px-4 py-2 font-comic text-xs md:text-sm border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'winner' ? 'bg-cyan-400 animate-pulse' : 'bg-white'}`}
                 >
-                  <span className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5" /> 
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" /> 
                     ¡GANADOR! ({tickets.filter(t => t.status === 'won').length})
                   </span>
                 </button>
                 <button 
                   onClick={() => setActiveTab('referrals')}
-                  className={`px-6 py-3 font-comic text-lg border-4 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'referrals' ? 'bg-purple-300' : 'bg-white'}`}
+                  className={`px-4 py-2 font-comic text-xs md:text-sm border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none ${activeTab === 'referrals' ? 'bg-purple-300' : 'bg-white'}`}
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1">
                     🎯 REFERIDOS
                   </span>
                 </button>
@@ -203,12 +203,12 @@ export default function UserDashboard() {
         </div>
         
         {activeTab === 'referrals' ? (
-            <div className="bg-white rounded-3xl shadow-[8px_8px_0px_0px_#000] border-4 border-black p-8 max-w-3xl transform -rotate-1 mt-10">
-                <h3 className="text-3xl font-comic text-black mb-6">Programa de Referidos</h3>
+            <div className="bg-white rounded-xl shadow-[2px_2px_0px_0px_#000] border-2 border-black p-4 max-w-3xl transform -rotate-1 mt-10">
+                <h3 className="text-xl font-comic text-black mb-6">Programa de Referidos</h3>
                 <p className="text-gray-700 font-bold mb-6 text-lg">
                     ¡Por cada amigo que se registre con tu enlace y compre un ticket, ganarás <strong className="inline-flex items-center whitespace-nowrap text-purple-600 bg-purple-100 px-2 border-2 border-black rounded mx-1">S/ 1.00</strong> en saldo para tus próximos tickets!
                 </p>
-                <div className="bg-gray-50 border-4 border-black p-6 rounded-2xl mb-8">
+                <div className="bg-gray-50 border-2 border-black p-4 rounded-2xl mb-4">
                     <p className="text-sm font-black uppercase text-gray-500 mb-2">Tu Enlace de Referido</p>
                     {!dbUser?.referralCode ? (
                         <div className="flex flex-col sm:flex-row gap-3 items-center bg-white p-4 rounded-xl border-2 border-dashed border-gray-300">
@@ -216,7 +216,7 @@ export default function UserDashboard() {
                             <button
                                 onClick={generateReferralCode}
                                 disabled={isGeneratingCode}
-                                className="w-full sm:w-auto bg-purple-500 text-white px-6 py-3 rounded-xl font-bold border-4 border-black shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000] transition-all disabled:opacity-50 uppercase"
+                                className="w-full sm:w-auto bg-purple-500 text-white px-4 py-3 rounded-xl font-bold border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000] transition-all disabled:opacity-50 uppercase"
                             >
                                 {isGeneratingCode ? 'Generando...' : 'Generar Código'}
                             </button>
@@ -226,7 +226,7 @@ export default function UserDashboard() {
                             <input 
                                 readOnly 
                                 value={`${referralBaseUrl}/?ref=${dbUser.referralCode}`} 
-                                className="bg-white border-4 border-black rounded-xl p-3 flex-grow font-mono text-sm sm:text-base outline-none shadow-[2px_2px_0px_0px_#000]"
+                                className="bg-white border-2 border-black rounded-xl p-3 flex-grow font-mono text-sm sm:text-base outline-none shadow-[2px_2px_0px_0px_#000]"
                             />
                             <button 
                                 onClick={() => {
@@ -234,7 +234,7 @@ export default function UserDashboard() {
                                     setIsCopied(true);
                                     setTimeout(() => setIsCopied(false), 2000);
                                 }}
-                                className={`px-6 py-3 rounded-xl font-bold border-4 border-black transition-all flex items-center justify-center gap-2 ${isCopied ? 'bg-green-400 text-black translate-x-1 translate-y-1 shadow-[0px_0px_0px_0px_#000]' : 'bg-black text-white shadow-[4px_4px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000]'}`}
+                                className={`px-4 py-3 rounded-xl font-bold border-2 border-black transition-all flex items-center justify-center gap-2 ${isCopied ? 'bg-green-400 text-black translate-x-1 translate-y-1 shadow-[0px_0px_0px_0px_#000]' : 'bg-black text-white shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-[0px_0px_0px_0px_#000]'}`}
                             >
                                 {isCopied ? (
                                     <>
@@ -247,14 +247,14 @@ export default function UserDashboard() {
                         </div>
                     )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bg-purple-100 border-4 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_#000] rotate-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-purple-100 border-2 border-black rounded-2xl p-4 shadow-[2px_2px_0px_0px_#000] rotate-1">
                         <p className="text-sm font-black uppercase text-gray-600 mb-1">Amigos Referidos</p>
-                        <p className="text-4xl font-comic text-black">{dbUser?.referralCount || 0}</p>
+                        <p className="text-lg font-comic text-black">{dbUser?.referralCount || 0}</p>
                     </div>
-                    <div className="bg-green-100 border-4 border-black rounded-2xl p-6 shadow-[4px_4px_0px_0px_#000] -rotate-1">
+                    <div className="bg-green-100 border-2 border-black rounded-2xl p-4 shadow-[2px_2px_0px_0px_#000] -rotate-1">
                         <p className="text-sm font-black uppercase text-gray-600 mb-1">Saldo Ganado</p>
-                        <p className="text-4xl font-comic text-black gap-1 flex items-center">
+                        <p className="text-lg font-comic text-black gap-1 flex items-center">
                             <span className="text-xl">S/</span>{(dbUser?.referralBalance || 0).toFixed(2)}
                         </p>
                     </div>
@@ -264,12 +264,12 @@ export default function UserDashboard() {
                 <ReferralList referralCode={dbUser?.referralCode} />
             </div>
         ) : filteredTickets.length === 0 ? (
-            <div className="bg-white rounded-3xl shadow-[8px_8px_0px_0px_#000] border-4 border-black p-12 text-center max-w-2xl mx-auto transform -rotate-1 mt-10">
-                <div className="w-24 h-24 bg-gray-100 border-4 border-black rounded-full flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_#000]">
+            <div className="bg-white rounded-xl shadow-[2px_2px_0px_0px_#000] border-2 border-black p-4 text-center max-w-2xl mx-auto transform -rotate-1 mt-10">
+                <div className="w-24 h-24 bg-gray-100 border-2 border-black rounded-full flex items-center justify-center mx-auto mb-6 shadow-[2px_2px_0px_0px_#000]">
                     <Search className="w-12 h-12 text-black opacity-20" />
                 </div>
-                <h2 className="text-3xl font-comic text-black mb-3">No hay tickets aquí</h2>
-                <p className="text-black font-bold mb-8 text-lg">Parece que no tienes tickets en esta categoría.</p>
+                <h2 className="text-xl font-comic text-black mb-3">No hay tickets aquí</h2>
+                <p className="text-black font-bold mb-4 text-lg">Parece que no tienes tickets en esta categoría.</p>
                 {activeTab !== 'participating' && (
                     <button onClick={() => setActiveTab('participating')} className="text-red-500 font-bold underline">Ver mis otros tickets</button>
                 )}
@@ -281,15 +281,15 @@ export default function UserDashboard() {
                     return (
                         <div key={raffleId} className="space-y-6">
                             <div className="flex items-center space-x-4 border-b-4 border-black pb-4">
-                                <div className="bg-white border-4 border-black px-4 py-1 rounded-xl shadow-[4px_4px_0px_0px_#000] transform -rotate-1">
-                                    <h3 className="font-comic text-2xl text-black uppercase">{raffle?.title || 'SORTEO...'}</h3>
+                                <div className="bg-white border-2 border-black px-4 py-1 rounded-xl shadow-[2px_2px_0px_0px_#000] transform -rotate-1">
+                                    <h3 className="font-comic text-lg text-black uppercase">{raffle?.title || 'SORTEO...'}</h3>
                                 </div>
                                 <span className="bg-yellow-200 border-2 border-black px-3 py-0.5 rounded-lg font-bold text-sm">
                                     {raffleTickets.length} {raffleTickets.length === 1 ? 'TICKET' : 'TICKETS'}
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {raffleTickets.map((ticket: any) => {
                                     const isPending = ticket.status === 'pending_payment';
                                     const timePassed = now - ticket.createdAt;
@@ -300,7 +300,7 @@ export default function UserDashboard() {
                                     const secondsLeft = Math.floor((timeLeft % 60000) / 1000);
 
                                     return (
-                                    <div key={ticket.id} className={`bg-white border-4 border-black rounded-3xl overflow-hidden shadow-[8px_8px_0px_0px_#000] flex flex-col group hover:-translate-y-2 transition-transform ${isExpired ? 'opacity-60 grayscale' : ''}`}>
+                                    <div key={ticket.id} className={`bg-white border-2 border-black rounded-xl overflow-hidden shadow-[2px_2px_0px_0px_#000] flex flex-col group hover:-translate-y-2 transition-transform ${isExpired ? 'opacity-60 grayscale' : ''}`}>
                                         <div className={`border-b-4 border-black p-3 flex justify-between items-center ${
                                             ticket.status === 'won' ? 'bg-cyan-400' : 
                                             isExpired ? 'bg-gray-300' :
@@ -436,7 +436,7 @@ function ReferralList({ referralCode }: { referralCode: string | undefined }) {
 
   if (loading) return <div className="mt-8 text-center text-gray-400 font-bold">Cargando referidos...</div>;
   if (referredUsers.length === 0) return (
-    <div className="mt-8 p-6 border-2 border-dashed border-gray-300 rounded-2xl text-center text-gray-500 font-bold italic">
+    <div className="mt-8 p-4 border-2 border-dashed border-gray-300 rounded-2xl text-center text-gray-500 font-bold italic">
       Aún no has referido a nadie. ¡Comparte tu enlace!
     </div>
   );
@@ -513,12 +513,12 @@ function EditProfileModal({ user, dbUser, onClose }: { user: any, dbUser: any, o
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                className="relative bg-white border-4 border-black rounded-3xl shadow-[8px_8px_0px_0px_#000] w-full max-w-md p-8 overflow-hidden"
+                className="relative bg-white border-2 border-black rounded-xl shadow-[2px_2px_0px_0px_#000] w-full max-w-md p-4 overflow-hidden"
             >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-200 -mr-16 -mt-16 rounded-full border-4 border-black" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-200 -mr-16 -mt-16 rounded-full border-2 border-black" />
                 
                 <div className="flex justify-between items-center mb-6 relative">
-                    <h3 className="text-3xl font-comic text-black">EDITAR PERFIL</h3>
+                    <h3 className="text-xl font-comic text-black">EDITAR PERFIL</h3>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full border-2 border-black">
                         <X className="w-6 h-6" />
                     </button>
@@ -543,7 +543,7 @@ function EditProfileModal({ user, dbUser, onClose }: { user: any, dbUser: any, o
                                     const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
                                     setName(capitalized);
                                 }}
-                                className="w-full text-lg font-bold border-4 border-black rounded-xl px-4 py-3 focus:bg-yellow-50 outline-none transition-all shadow-[4px_4px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-none capitalize"
+                                className="w-full text-lg font-bold border-2 border-black rounded-xl px-4 py-3 focus:bg-yellow-50 outline-none transition-all shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-none capitalize"
                                 placeholder="Ej. Juan"
                             />
                         </div>
@@ -557,7 +557,7 @@ function EditProfileModal({ user, dbUser, onClose }: { user: any, dbUser: any, o
                                     const capitalized = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
                                     setLastName(capitalized);
                                 }}
-                                className="w-full text-lg font-bold border-4 border-black rounded-xl px-4 py-3 focus:bg-yellow-50 outline-none transition-all shadow-[4px_4px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-none capitalize"
+                                className="w-full text-lg font-bold border-2 border-black rounded-xl px-4 py-3 focus:bg-yellow-50 outline-none transition-all shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-none capitalize"
                                 placeholder="Ej. Pérez García"
                             />
                         </div>
@@ -571,7 +571,7 @@ function EditProfileModal({ user, dbUser, onClose }: { user: any, dbUser: any, o
                             value={whatsapp} 
                             onChange={(e) => setWhatsapp(e.target.value)}
                             maxLength={9}
-                            className="w-full text-lg font-bold border-4 border-black rounded-xl px-4 py-3 focus:bg-cyan-50 outline-none transition-all shadow-[4px_4px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-none"
+                            className="w-full text-lg font-bold border-2 border-black rounded-xl px-4 py-3 focus:bg-cyan-50 outline-none transition-all shadow-[2px_2px_0px_0px_#000] focus:translate-x-0.5 focus:translate-y-0.5 focus:shadow-none"
                             placeholder="Ej. 912345678"
                         />
                         <p className="text-[10px] text-gray-500 mt-2 font-bold uppercase italic">※ Usamos esto para contactarte si ganas un premio.</p>
@@ -580,7 +580,7 @@ function EditProfileModal({ user, dbUser, onClose }: { user: any, dbUser: any, o
                     <button 
                         type="submit"
                         disabled={saving}
-                        className="w-full bg-black text-white font-bold py-4 rounded-2xl border-4 border-black shadow-[4px_4px_0px_0px_#facc15] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 mt-4 uppercase text-xl"
+                        className="w-full bg-black text-white font-bold py-4 rounded-2xl border-2 border-black shadow-[2px_2px_0px_0px_#facc15] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 mt-4 uppercase text-xl"
                     >
                         {saving ? 'Guardando...' : (
                             <>

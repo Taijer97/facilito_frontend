@@ -99,10 +99,10 @@ export default function ProfileCompletionModal() {
               initial={{ scale: 0.9, opacity: 0, rotate: -2 }}
               animate={{ scale: 1, opacity: 1, rotate: 0 }}
               exit={{ scale: 0.9, opacity: 0, rotate: 2 }}
-              className="bg-white border-8 border-black rounded-[3rem] p-8 max-w-xl w-full relative shadow-[20px_20px_0px_0px_#ff4d4d]"
+              className="bg-white border-2 border-black rounded-2xl p-4 max-w-xl w-full relative shadow-[20px_20px_0px_0px_#ff4d4d]"
             >
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-yellow-400 border-4 border-black px-6 py-2 rounded-full shadow-[4px_4px_0px_0px_#000] z-10 w-fit whitespace-nowrap">
-                  <p className="font-comic text-2xl font-bold flex items-center gap-2">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-400 border-2 border-black px-4 py-2 rounded-full shadow-[2px_2px_0px_0px_#000] z-10 w-fit whitespace-nowrap">
+                  <p className="font-comic text-lg font-bold flex items-center gap-2">
                       <ShieldCheck className="w-8 h-8" />
                       ¡REQUISITO IMPORTANTE!
                   </p>
@@ -116,7 +116,7 @@ export default function ProfileCompletionModal() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                  {error && (
-                   <div className="bg-red-100 border-4 border-red-600 p-3 rounded-2xl text-red-600 font-black text-sm text-center animate-pulse">
+                   <div className="bg-red-100 border-2 border-red-600 p-3 rounded-2xl text-red-600 font-black text-sm text-center animate-pulse">
                      ⚠️ {error}
                    </div>
                  )}
@@ -135,7 +135,7 @@ export default function ProfileCompletionModal() {
                           }} 
                           required 
                           placeholder="Tus nombres"
-                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
+                          className="w-full border-2 border-black p-3 rounded-2xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
                       />
                     </div>
                     <div className="space-y-1">
@@ -152,7 +152,7 @@ export default function ProfileCompletionModal() {
                           }} 
                           required 
                           placeholder="Tus apellidos"
-                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
+                          className="w-full border-2 border-black p-3 rounded-2xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
                       />
                     </div>
                  </div>
@@ -169,7 +169,7 @@ export default function ProfileCompletionModal() {
                           required 
                           maxLength={8}
                           placeholder="Documento de Identidad"
-                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                          className="w-full border-2 border-black p-3 rounded-2xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
                       />
                     </div>
                     <div className="space-y-1">
@@ -182,7 +182,7 @@ export default function ProfileCompletionModal() {
                           onChange={e => setWhatsapp(e.target.value)} 
                           required 
                           placeholder="Ej: 987654321"
-                          className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
+                          className="w-full border-2 border-black p-3 rounded-2xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold"
                       />
                     </div>
                  </div>
@@ -201,7 +201,7 @@ export default function ProfileCompletionModal() {
                       }} 
                       required 
                       placeholder="Calle, Distrito, Ciudad"
-                      className="w-full border-4 border-black p-3 rounded-2xl shadow-[4px_4px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
+                      className="w-full border-2 border-black p-3 rounded-2xl shadow-[2px_2px_0px_0px_#000] focus:shadow-none focus:translate-x-1 focus:translate-y-1 transition-all outline-none font-bold capitalize"
                    />
                  </div>
 
@@ -209,7 +209,7 @@ export default function ProfileCompletionModal() {
                     <button 
                       type="submit" 
                       disabled={submitting}
-                      className="w-full bg-green-500 text-white font-comic text-2xl py-4 rounded-3xl border-4 border-black shadow-[8px_8px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                      className="w-full bg-green-500 text-white font-comic text-lg py-4 rounded-xl border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-3"
                     >
                       {submitting ? 'GUARDANDO...' : '¡LISTO, ACTUALIZAR!'}
                     </button>
